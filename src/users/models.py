@@ -1,13 +1,7 @@
 from ..database import Base
 from typing import Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import (
-    Column,
-    String,
-    ForeignKey,
-    TIMESTAMP,
-    text,
-)
+from sqlalchemy import Column, String, ForeignKey, TIMESTAMP, func
 
 
 class User(Base):
@@ -20,9 +14,9 @@ class User(Base):
     avatar: Mapped[Optional[str]]
     is_verified: Mapped[bool] = mapped_column(default=False)
     is_password_reset_requested: Mapped[bool] = mapped_column(default=False)
-    created_at = Column(TIMESTAMP, server_default=text("now()"))
+    created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(
-        TIMESTAMP, server_default=text("now()"), onupdate=text("now()")
+        TIMESTAMP, server_default=func.now(), onupdate=func.now()
     )
 
     api_keys = relationship("ApiKey", back_populates="user")
