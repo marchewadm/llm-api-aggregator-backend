@@ -1,20 +1,6 @@
 from fastapi import FastAPI
-
-from .database import SessionLocal
+from .routers import users
 
 
 app = FastAPI()
-
-
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-@app.get("/")
-async def read_root():
-    return "Hello, World!"
+app.include_router(users.router)
