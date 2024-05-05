@@ -9,3 +9,7 @@ def get_user(db: Session, user_id: int):
 
 def create_user(db: Session, user: schemas.UserCreate):
     return user
+
+
+def login_user(db: Session, user: schemas.UserLogin):
+    return user

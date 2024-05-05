@@ -41,6 +41,10 @@ class UserCreate(UserBase):
         return v
 
 
+class UserLogin(UserBase):
+    password: Annotated[str, StringConstraints(min_length=8)]
+
+
 class User(UserBase):
     id: int
     api_keys: list[ApiKey] = []
