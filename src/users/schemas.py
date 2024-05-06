@@ -5,6 +5,7 @@ from pydantic import (
     field_validator,
     ValidationInfo,
     StringConstraints,
+    ConfigDict,
 )
 
 
@@ -17,11 +18,10 @@ class ApiKeyCreate(ApiKeyBase):
 
 
 class ApiKey(ApiKeyBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
-
-    class Config:
-        orm_mode = True
 
 
 class UserBase(BaseModel):
@@ -46,8 +46,7 @@ class UserLogin(UserBase):
 
 
 class User(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     api_keys: list[ApiKey] = []
-
-    class Config:
-        orm_mode = True
