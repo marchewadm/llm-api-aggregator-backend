@@ -1,4 +1,5 @@
 from typing import Optional
+
 from sqlalchemy import Column, String, ForeignKey, TIMESTAMP, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
