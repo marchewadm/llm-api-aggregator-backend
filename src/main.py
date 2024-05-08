@@ -1,12 +1,15 @@
 from typing import Annotated
+
 from fastapi import FastAPI, status, HTTPException, Depends
 
+from .users import router as users_router
+from .auth.router import router as auth_router
 from .auth.auth import get_current_user
 
-from .users import router as users_router
 
 app = FastAPI()
 app.include_router(users_router.router)
+app.include_router(auth_router)
 
 user_dependency = Annotated[dict, Depends(get_current_user)]
 

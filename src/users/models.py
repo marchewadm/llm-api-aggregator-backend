@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy import Column, String, ForeignKey, TIMESTAMP, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.database import Base
+from src.database.database import Base
 
 
 class User(Base):

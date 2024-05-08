@@ -2,13 +2,12 @@ from datetime import timedelta, datetime, UTC
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
-
-from src.users.dependencies import db_dependency
 from jose import JWTError, jwt
 
-from src.users.crud import get_user_by_email
-from src.constants import JWT_SECRET_KEY, ALGORITHM
 from .utils import bcrypt_context, oauth2_bearer
+from src.constants import JWT_SECRET_KEY, ALGORITHM
+from src.database.dependencies import db_dependency
+from src.users.crud import get_user_by_email
 
 
 def authenticate_user(email: str, password: str, db: db_dependency):

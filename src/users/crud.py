@@ -1,9 +1,8 @@
 from sqlalchemy.orm import Session
 
-from src.auth.utils import bcrypt_context
-
 from .models import User
 from .schemas import UserCreate, UserLogin
+from src.auth.utils import bcrypt_context
 
 
 def create_user(db: Session, user: UserCreate):
