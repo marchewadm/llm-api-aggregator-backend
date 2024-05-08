@@ -71,6 +71,9 @@ And that's it! Now you can proceed to the next step: running your new, freshly i
 ## Usage
 
 ```bash
+# NOTE:
+# Command below should be executed from the root directory
+
 uvicorn src.main:app --reload
 ```
 
