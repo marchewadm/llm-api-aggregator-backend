@@ -14,14 +14,12 @@ def authenticate_user(email: str, password: str, db: db_dependency):
     """Authenticates a user by their email and password."""
 
     user = get_user_by_email(db, email)
-    # print(
-    #     user
-    # )  # TODO: DEBUG, CHECK IF THE RETURNED FIELDS ARE CORRECT: email, password
-    print(user)
+
     if not user:
         return False
     if not bcrypt_context.verify(password, user.password):
         return False
+    # TODO: Uncomment the following lines after email verification is implemented
     # if not user.is_verified:
     #     return False
     return user

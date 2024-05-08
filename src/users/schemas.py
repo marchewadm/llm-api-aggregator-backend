@@ -45,6 +45,23 @@ class UserLogin(UserBase):
     password: Annotated[str, StringConstraints(min_length=8)]
 
 
+class UserUpdatePassword(UserBase):
+    old_password: Annotated[str, StringConstraints(min_length=8)]
+    password: Annotated[str, StringConstraints(min_length=8)]
+    password2: Annotated[str, StringConstraints(min_length=8)]
+
+    @field_validator("password2")
+    @classmethod
+    def validate_password(cls, v: str, info: ValidationInfo) -> str:
+        if "password" in info.data and v != info.data["password"]:
+            raise ValueError("Passwords do not match")
+        if "old_password" in info.data and v == info.data["old_password"]:
+            raise ValueError(
+                "New password cannot be the same as the old password"
+            )
+        return v
+
+
 class User(UserBase):
     model_config = ConfigDict(from_attributes=True)
 

@@ -14,13 +14,13 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/token", response_model=Token)
-async def login_user(
+async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: db_dependency,
 ):
     """
     Login a user and return an access token.
-    If cannot authenticate user, e.g. wrong password, return 401.
+    If user cannot be authenticated, e.g. because of wrong password, return a 401 status code.
     """
 
     user = authenticate_user(form_data.username, form_data.password, db)

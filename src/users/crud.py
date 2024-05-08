@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from .models import User
-from .schemas import UserCreate, UserLogin
+from .schemas import UserCreate, UserLogin, UserUpdatePassword
 from src.auth.utils import bcrypt_context
 
 
@@ -29,5 +29,30 @@ def get_user_by_email(db: Session, email: str):
         .filter(User.email == email)  # noqa
         .first()
     )
+    return user
+
+
+def get_user_by_id(db: Session, user_id: int):
+    """Retrieves a user by their ID from the database."""
+
+    user = db.query(User).filter(User.id == user_id).first()  # noqa
+    return user
+
+
+def update_user_password(
+    db: Session, user_data: UserUpdatePassword, user_id: int
+):
+    """Updates a user's password in the database by their ID."""
+
+    user = get_user_by_id(db, user_id)
+
+    if not user:
+        return False
+    if not bcrypt_context.verify(user_data.old_password, user.password):
+        return False
+
+    user.password = bcrypt_context.hash(user_data.password)
+
+    db.commit()
 
     return user
