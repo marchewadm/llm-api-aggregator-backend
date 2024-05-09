@@ -9,6 +9,8 @@ Chatty AI is a tool that allows you to store your chats from various LLMs in one
 
 ## Installation
 
+### Clone a repository
+
 ```bash
 git clone https://github.com/marchewadm/chattyai_backend.git
 ```
