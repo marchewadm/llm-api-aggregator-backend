@@ -1,4 +1,4 @@
-from typing_extensions import Annotated
+from typing import Annotated, Optional
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -60,6 +60,12 @@ class UserUpdatePassword(UserBase):
                 "New password cannot be the same as the old password"
             )
         return v
+
+
+class UserUpdateProfile(UserBase):
+    avatar: Optional[str] = None
+    name: Optional[Annotated[str, StringConstraints(min_length=1)]] = None
+    email: Optional[EmailStr] = None
 
 
 class User(UserBase):
