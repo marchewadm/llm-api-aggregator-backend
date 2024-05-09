@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session, load_only
 from .models import User
 from .schemas import (
     UserCreate,
-    UserLogin,
     UserUpdatePassword,
     UserUpdateProfile,
 )
@@ -11,7 +10,16 @@ from src.auth.utils import bcrypt_context
 
 
 def create_user(db: Session, user: UserCreate):
-    """Inserts a new user into the database with a hashed password."""
+    """
+    Inserts a new user into the database with a hashed password.
+
+    Args:
+        db (Session): The database session.
+        user (UserCreate): The user data to insert into the database.
+
+    Returns:
+        User: The user object that was inserted into the database.
+    """
 
     new_user = User(
         name=user.name,
@@ -21,12 +29,20 @@ def create_user(db: Session, user: UserCreate):
 
     db.add(new_user)
     db.commit()
-
     return new_user
 
 
 def get_user_by_email(db: Session, email: str):
-    """Retrieves a user's email, password and is_verified email status from the database."""
+    """
+    Retrieves a user's email, password and is_verified email status from the database.
+
+    Args:
+        db (Session): The database session.
+        email (str): The user's email.
+
+    Returns:
+        User: The user object containing the requested fields.
+    """
 
     user = (
         db.query(User)
@@ -68,7 +84,17 @@ def get_desired_fields_by_user_id(
 def update_user_password(
     db: Session, user_id: int, user_data: UserUpdatePassword
 ):
-    """Updates a user's password in the database by their ID."""
+    """
+    Updates a user's password in the database by their ID.
+
+    Args:
+        db (Session): The database session.
+        user_id (int): The user's ID.
+        user_data (UserUpdatePassword): The user data containing the old and new passwords.
+
+    Returns:
+        User: The user object with the updated password.
+    """
 
     user = get_desired_fields_by_user_id(db, user_id, ["password"])
 
@@ -86,7 +112,17 @@ def update_user_password(
 def update_user_profile(
     db: Session, user_id: int, user_data: UserUpdateProfile
 ):
-    """Updates a user's profile in the database by their ID."""
+    """
+    Updates a user's profile in the database by their ID.
+
+    Args:
+        db (Session): The database session.
+        user_id (int): The user's ID.
+        user_data (UserUpdateProfile): The user data containing optional fields to update: name, email and avatar.
+
+    Returns:
+        bool: True if the user's profile was updated, False otherwise.
+    """
 
     user = get_desired_fields_by_user_id(
         db, user_id, ["name", "email", "avatar"]
