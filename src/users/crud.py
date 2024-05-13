@@ -12,6 +12,12 @@ from src.auth.utils import bcrypt_context
 def create_user(db: Session, user: UserCreate):
     """
     Inserts a new user into the database with a hashed password.
+    Due to security reasons, the return value is always the same message, regardless of the outcome.
+    I don't want to leak information about whether the email is already taken or not.
+
+    TODO: Implement a rate limiter for sending verification emails (e.g. 1 email per 10 minutes).
+    TODO: Implement a verification email system. If the email is already taken, the user with that email should be
+    TODO: notified that someone tried to register with their email.
 
     Args:
         db (Session): The database session.
@@ -21,15 +27,26 @@ def create_user(db: Session, user: UserCreate):
         User: The user object that was inserted into the database.
     """
 
-    new_user = User(
-        name=user.name,
-        email=user.email,
-        password=bcrypt_context.hash(user.password),
+    is_email_taken = (
+        db.query(User)
+        .options(load_only(User.id))
+        .filter(User.email == user.email)  # noqa
+        .first()
     )
 
-    db.add(new_user)
-    db.commit()
-    return new_user
+    if not is_email_taken:
+        new_user = User(
+            name=user.name,
+            email=user.email,
+            password=bcrypt_context.hash(user.password),
+        )
+        db.add(new_user)
+        db.commit()
+
+    return {
+        "message": "We've sent you a verification email. Please check your inbox."
+        " If you don't see it, check your spam folder or try again later."
+    }
 
 
 def get_user_by_email(db: Session, email: str):

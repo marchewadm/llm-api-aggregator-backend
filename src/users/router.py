@@ -1,17 +1,12 @@
 from fastapi import APIRouter, HTTPException, status
 
 from . import crud
-from .schemas import UserCreate, UserUpdatePassword, UserUpdateProfile
+from .schemas import UserUpdatePassword, UserUpdateProfile
 from src.database.dependencies import db_dependency
 from src.auth.dependencies import auth_dependency
 
 
-router = APIRouter(prefix="/users", tags=["users"])
-
-
-@router.post("/register")
-async def create_user(db: db_dependency, user: UserCreate):
-    return crud.create_user(db, user)
+router = APIRouter(prefix="/user", tags=["user"])
 
 
 @router.post("/update-password")

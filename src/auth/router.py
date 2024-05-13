@@ -6,11 +6,21 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from .schemas import Token
 from .auth import authenticate_user, create_access_token
+
+from src.users.schemas import UserCreate
+from src.users import crud
+
 from src.database.dependencies import db_dependency
 from src.constants import ACCESS_TOKEN_EXPIRE_MINUTES
 
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/authentication", tags=["authentication"])
+
+
+@router.post("/register")
+async def create_user(db: db_dependency, user: UserCreate):
+    response = crud.create_user(db, user)
+    return response
 
 
 @router.post("/token", response_model=Token)
