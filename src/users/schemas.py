@@ -73,3 +73,9 @@ class User(UserBase):
 
     id: int
     api_keys: list[ApiKey] = []
+
+
+class UserResponse(BaseModel):
+    name: str
+    email: EmailStr
+    avatar: str | None = None
