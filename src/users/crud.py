@@ -139,6 +139,8 @@ def update_user_profile(
 
     Returns:
         bool: True if the user's profile was updated, False otherwise.
+
+    TODO: if the user tries to update their email, send a verification email to the new email.
     """
 
     user = get_desired_fields_by_user_id(
@@ -149,12 +151,15 @@ def update_user_profile(
         return False
 
     is_updated = False
+    fields_to_update = {}
+
     for field, new_value in user_data.dict().items():
         current_value = getattr(user, field)
         if new_value is not None and new_value != current_value:
             setattr(user, field, new_value)
             is_updated = True
+            fields_to_update.update({field: new_value})
 
     if is_updated:
         db.commit()
-    return is_updated
+    return fields_to_update

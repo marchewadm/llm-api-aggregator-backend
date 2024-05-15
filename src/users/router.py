@@ -21,24 +21,24 @@ async def get_profile(auth: auth_dependency, db: db_dependency):
     )
 
 
-@router.post("/update-password")
+@router.patch("/update-password")
 async def update_password(
     auth: auth_dependency, db: db_dependency, user_data: UserUpdatePassword
 ):
     if auth is None:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed",
         )
     return crud.update_user_password(db, auth["id"], user_data)
 
 
-@router.post("/update-profile")
+@router.patch("/update-profile")
 async def update_profile(
     auth: auth_dependency, db: db_dependency, user_data: UserUpdateProfile
 ):
     if auth is None:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed",
         )
