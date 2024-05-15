@@ -8,6 +8,7 @@ from .utils import bcrypt_context, oauth2_bearer
 from src.constants import JWT_SECRET_KEY, ALGORITHM
 from src.database.dependencies import db_dependency
 from src.users.crud.crud import get_user_by_email
+from src.exceptions import NotAuthenticatedException
 
 
 def authenticate_user(email: str, password: str, db: db_dependency):
@@ -44,14 +45,10 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         user_id: int = payload.get("id")
 
         if email is None or user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate user",
+            raise NotAuthenticatedException(
+                message="Could not authenticate user."
             )
 
         return {"email": email, "id": user_id}
     except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate user",
-        )
+        raise NotAuthenticatedException(message="Could not authenticate user.")
