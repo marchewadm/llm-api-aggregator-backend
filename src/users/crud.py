@@ -1,11 +1,8 @@
 from sqlalchemy.orm import Session, load_only
 
 from .models import User
-from .schemas import (
-    UserCreate,
-    UserUpdatePassword,
-    UserUpdateProfile,
-)
+from .schemas.schemas import UserCreate, UserUpdatePassword, UserUpdateProfile
+from .schemas.response_schemas import UpdateUserPasswordResponse
 from src.auth.utils import bcrypt_context
 
 
@@ -100,7 +97,7 @@ def get_desired_fields_by_user_id(
 
 def update_user_password(
     db: Session, user_id: int, user_data: UserUpdatePassword
-):
+) -> UpdateUserPasswordResponse:
     """
     Updates a user's password in the database by their ID.
 
@@ -110,20 +107,21 @@ def update_user_password(
         user_data (UserUpdatePassword): The user data containing the old and new passwords.
 
     Returns:
-        User: The user object with the updated password.
+        dict: A dictionary containing a message and status code.
     """
 
     user = get_desired_fields_by_user_id(db, user_id, ["password"])
 
-    if not user:
-        return False
-    if not bcrypt_context.verify(user_data.old_password, user.password):
-        return False
+    if not user or not bcrypt_context.verify(
+        user_data.old_password, user.password
+    ):
+        return UpdateUserPasswordResponse(
+            message="Could not authenticate user.", status_code=401
+        )
 
     user.password = bcrypt_context.hash(user_data.password)
-
     db.commit()
-    return user
+    return UpdateUserPasswordResponse(message="Password updated successfully.")
 
 
 def update_user_profile(

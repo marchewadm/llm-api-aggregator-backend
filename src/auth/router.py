@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from .schemas import Token
 from .auth import authenticate_user, create_access_token
 
-from src.users.schemas import UserCreate
+from src.users.schemas.schemas import UserCreate
 from src.users import crud
 
 from src.database.dependencies import db_dependency
