@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import JSONResponse
 
-from . import crud
+from .crud import crud
 from .schemas.schemas import UserUpdatePassword, UserUpdateProfile
 from .schemas.response_schemas import (
     GetUserProfileResponse,
@@ -8,6 +9,9 @@ from .schemas.response_schemas import (
 )
 from src.database.dependencies import db_dependency
 from src.auth.dependencies import auth_dependency
+
+from src.exceptions import NotAuthenticatedException
+from .openapi_responses import update_password_responses
 
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -25,7 +29,11 @@ async def get_profile(auth: auth_dependency, db: db_dependency):
     )
 
 
-@router.patch("/update-password", response_model=UpdateUserPasswordResponse)
+@router.patch(
+    "/update-password",
+    response_model=UpdateUserPasswordResponse,
+    responses={**update_password_responses},
+)
 async def update_password(
     auth: auth_dependency, db: db_dependency, user_data: UserUpdatePassword
 ):
@@ -36,12 +44,9 @@ async def update_password(
         )
 
     result = crud.update_user_password(db, auth["id"], user_data)
-    if result.status_code == 401:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=result.message,
-        )
-    return result
+    if not result.success:
+        raise NotAuthenticatedException(message=result.message)
+    return JSONResponse(content={"message": result.message})
 
 
 @router.patch("/update-profile")

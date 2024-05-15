@@ -7,7 +7,7 @@ from jose import JWTError, jwt
 from .utils import bcrypt_context, oauth2_bearer
 from src.constants import JWT_SECRET_KEY, ALGORITHM
 from src.database.dependencies import db_dependency
-from src.users.crud import get_user_by_email
+from src.users.crud.crud import get_user_by_email
 
 
 def authenticate_user(email: str, password: str, db: db_dependency):

@@ -23,11 +23,9 @@ class UpdateUserPasswordResponse(BaseModel):
 
     Attributes:
         - message (str): A message indicating the result of the operation.
-        - status_code (int): The status code of the operation.
     """
 
     message: str
-    status_code: Optional[int] = None
 
 
 class UpdateUserProfileResponse(BaseModel):
