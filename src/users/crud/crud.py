@@ -127,7 +127,7 @@ def update_user_password(
         return UpdateUserPasswordResult(
             is_success=False,
             message="Please check your credentials and try again.",
-            status_code=409,
+            status_code=400,
         )
 
     user.password = bcrypt_context.hash(user_data.password)

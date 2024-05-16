@@ -9,14 +9,14 @@ from .exceptions import (
     not_authenticated_exception_handler,
     UserNotFoundException,
     user_not_found_exception_handler,
-    ConflictException,
-    conflict_exception_handler,
+    BadRequestException,
+    bad_request_exception_handler,
 )
 
 exception_handlers = {
     NotAuthenticatedException: not_authenticated_exception_handler,
     UserNotFoundException: user_not_found_exception_handler,
-    ConflictException: conflict_exception_handler,
+    BadRequestException: bad_request_exception_handler,
 }
 
 app = FastAPI(exception_handlers=exception_handlers)

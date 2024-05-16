@@ -10,7 +10,7 @@ from .schemas.response_schemas import (
 from src.database.dependencies import db_dependency
 from src.auth.dependencies import auth_dependency
 
-from src.exceptions import UserNotFoundException, ConflictException
+from src.exceptions import UserNotFoundException, BadRequestException
 from .openapi_responses import (
     get_profile_responses,
     update_password_responses,
@@ -44,8 +44,8 @@ async def update_password(
     if not result.is_success:
         if result.status_code == 404:
             raise UserNotFoundException(message=result.message)
-        if result.status_code == 409:
-            raise ConflictException(message=result.message)
+        if result.status_code == 400:
+            raise BadRequestException(message=result.message)
     return JSONResponse(content={"message": result.message})
 
 

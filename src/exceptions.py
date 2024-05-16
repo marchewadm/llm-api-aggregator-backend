@@ -33,11 +33,14 @@ async def user_not_found_exception_handler(
     )
 
 
-class ConflictException(AppBaseException):
+class BadRequestException(AppBaseException):
     pass
 
 
-async def conflict_exception_handler(request: Request, exc: ConflictException):
+async def bad_request_exception_handler(
+    request: Request, exc: BadRequestException
+):
     return JSONResponse(
-        status_code=status.HTTP_409_CONFLICT, content={"message": exc.message}
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"message": exc.message},
     )
