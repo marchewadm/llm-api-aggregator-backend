@@ -1,11 +1,11 @@
-from typing_extensions import Annotated
+from typing import Annotated, Optional
 from pydantic import (
     BaseModel,
     EmailStr,
     field_validator,
     ValidationInfo,
-    StringConstraints,
     ConfigDict,
+    Field,
 )
 
 
@@ -29,9 +29,9 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    name: Annotated[str, StringConstraints(min_length=1)]
-    password: Annotated[str, StringConstraints(min_length=8)]
-    password2: Annotated[str, StringConstraints(min_length=8)]
+    name: Annotated[str, Field(min_length=1)]
+    password: Annotated[str, Field(min_length=8)]
+    password2: Annotated[str, Field(min_length=8)]
 
     @field_validator("password2")
     @classmethod
@@ -42,13 +42,19 @@ class UserCreate(UserBase):
 
 
 class UserLogin(UserBase):
-    password: Annotated[str, StringConstraints(min_length=8)]
+    password: Annotated[str, Field(min_length=8)]
 
 
-class UserUpdatePassword(UserBase):
-    old_password: Annotated[str, StringConstraints(min_length=8)]
-    password: Annotated[str, StringConstraints(min_length=8)]
-    password2: Annotated[str, StringConstraints(min_length=8)]
+class UserUpdatePassword(BaseModel):
+    old_password: Annotated[
+        str, Field(min_length=8, validation_alias="currentPassword")
+    ]
+    password: Annotated[
+        str, Field(min_length=8, validation_alias="newPassword")
+    ]
+    password2: Annotated[
+        str, Field(min_length=8, validation_alias="newPassword2")
+    ]
 
     @field_validator("password2")
     @classmethod
@@ -60,6 +66,12 @@ class UserUpdatePassword(UserBase):
                 "New password cannot be the same as the old password"
             )
         return v
+
+
+class UserUpdateProfile(BaseModel):
+    avatar: Optional[str] = None
+    name: Optional[Annotated[str, Field(min_length=1)]] = None
+    email: Optional[EmailStr] = None
 
 
 class User(UserBase):

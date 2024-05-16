@@ -9,6 +9,8 @@ Chatty AI is a tool that allows you to store your chats from various LLMs in one
 
 ## Installation
 
+### Clone a repository
+
 ```bash
 git clone https://github.com/marchewadm/chattyai_backend.git
 ```
@@ -56,15 +58,18 @@ The `.env` file should look like this:
 ```
 DB_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE
 JWT_SECRET_KEY=YOUR_SECRET_KEY
+ALLOWED_ORIGIN=YOUR_API_CONSUMER
 ```
 
-NOTE:<br />Remember to adjust DB_URL according to your database username and password. If the project is running locally, you should set the host and port as `localhost:5432` (or `127.0.0.1:5432` if it doesn't work) since it is running on your local machine and `5432` is the default port for PostgreSQL.
+NOTE:
+- Remember to adjust DB_URL according to your database username and password. If the project is running locally, you should set the host and port as `localhost:5432` (or `127.0.0.1:5432` if it doesn't work) since it is running on your local machine and `5432` is the default port for PostgreSQL.
 
-You can generate the JWT_SECRET_KEY by executing this command in your console:
+- You can generate the JWT_SECRET_KEY by executing this command in your console:
+  ```bash
+  openssl rand -hex 32
+  ```
 
-```bash
-openssl rand -hex 32
-```
+- The ALLOWED_ORIGIN variable should be set to the address of the API consumer. If you are running the frontend locally, you should set it to `http://localhost:5173` as it is the default address for the frontend running on Vite.
 
 And that's it! Now you can proceed to the next step: running your new, freshly installed and configured app.
 
