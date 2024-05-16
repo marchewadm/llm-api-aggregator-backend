@@ -6,11 +6,11 @@ from src.users.schemas.schemas import (
     UserUpdatePassword,
     UserUpdateProfile,
 )
-from .crud_results import UpdateUserPasswordResult
+from .crud_results import UpdateUserPasswordResult, CreateUserResult
 from src.auth.utils import bcrypt_context
 
 
-def create_user(db: Session, user: UserCreate):
+def create_user(db: Session, user: UserCreate) -> CreateUserResult:
     """
     Inserts a new user into the database with a hashed password.
     Due to security reasons, the return value is always the same message, regardless of the outcome.
@@ -43,11 +43,10 @@ def create_user(db: Session, user: UserCreate):
         )
         db.add(new_user)
         db.commit()
-
-    return {
-        "message": "We've sent you a verification email. Please check your inbox."
+    return CreateUserResult(
+        message="We've sent you a verification email. Please check your inbox."
         " If you don't see it, check your spam folder or try again later."
-    }
+    )
 
 
 def get_user_by_email(db: Session, email: str):
@@ -95,7 +94,6 @@ def get_desired_fields_by_user_id(
         .filter(User.id == user_id)  # noqa
         .first()
     )
-
     return user
 
 
