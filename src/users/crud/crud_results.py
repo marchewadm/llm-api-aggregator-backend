@@ -3,5 +3,6 @@ from dataclasses import dataclass
 
 @dataclass
 class UpdateUserPasswordResult:
-    success: bool
+    is_success: bool
     message: str
+    status_code: int = 200

@@ -31,6 +31,14 @@ class UpdateUserPasswordResponse(BaseModel):
 class UpdateUserProfileResponse(BaseModel):
     """
     Schema for the response body of the PATCH /user/update-profile endpoint.
+
+    Attributes:
+        - message (str): A message indicating the result of the operation.
+        - name (str | None): The user's updated name, if available.
+        - email (EmailStr | None): The user's updated email, if available.
+        - avatar (str | None): The user's updated avatar URL, if available.
     """
 
-    pass
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    avatar: Optional[str] = None

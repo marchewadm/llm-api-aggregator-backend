@@ -111,22 +111,30 @@ def update_user_password(
         user_data (UserUpdatePassword): The user data containing the old and new passwords.
 
     Returns:
-        dict: A dictionary containing a message and status code.
+        UpdateUserPasswordResult: The result of the operation containing
+        is_success flag, a message and an optional status code (default is 200).
     """
 
     user = get_desired_fields_by_user_id(db, user_id, ["password"])
 
-    if not user or not bcrypt_context.verify(
-        user_data.old_password, user.password
-    ):
+    if not user:
         return UpdateUserPasswordResult(
-            success=False, message="Could not authenticate user."
+            is_success=False,
+            message="Could not authenticate user.",
+            status_code=404,
+        )
+    if not bcrypt_context.verify(user_data.old_password, user.password):
+        return UpdateUserPasswordResult(
+            is_success=False,
+            message="Please check your credentials and try again.",
+            status_code=409,
         )
 
     user.password = bcrypt_context.hash(user_data.password)
     db.commit()
     return UpdateUserPasswordResult(
-        success=True, message="Password updated successfully."
+        is_success=True,
+        message="Password updated successfully. Now you can log in with your new password.",
     )
 
 

@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime, UTC
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from jose import JWTError, jwt
 
 from .utils import bcrypt_context, oauth2_bearer
@@ -51,4 +51,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
 
         return {"email": email, "id": user_id}
     except JWTError:
-        raise NotAuthenticatedException(message="Could not authenticate user.")
+        raise NotAuthenticatedException(
+            message="Your session has expired. Please log in again."
+        )

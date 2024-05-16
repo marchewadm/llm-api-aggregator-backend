@@ -9,4 +9,6 @@ shared_responses = {
     },
 }
 
+get_profile_responses = {401: shared_responses[401]}
 update_password_responses = {401: shared_responses[401]}
+update_profile_responses = {401: shared_responses[401]}
