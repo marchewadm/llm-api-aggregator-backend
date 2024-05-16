@@ -39,6 +39,7 @@ class UpdateUserProfileResponse(BaseModel):
         - avatar (str | None): The user's updated avatar URL, if available.
     """
 
+    message: str
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     avatar: Optional[str] = None

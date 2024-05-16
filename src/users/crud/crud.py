@@ -6,7 +6,11 @@ from src.users.schemas.schemas import (
     UserUpdatePassword,
     UserUpdateProfile,
 )
-from .crud_results import UpdateUserPasswordResult, CreateUserResult
+from .crud_results import (
+    CreateUserResult,
+    UpdateUserPasswordResult,
+    UpdateUserProfileResult,
+)
 from src.auth.utils import bcrypt_context
 
 
@@ -25,7 +29,7 @@ def create_user(db: Session, user: UserCreate) -> CreateUserResult:
         user (UserCreate): The user data to insert into the database.
 
     Returns:
-        User: The user object that was inserted into the database.
+        CreateUserResult: The result of the operation containing a message.
     """
 
     is_email_taken = (
@@ -138,7 +142,7 @@ def update_user_password(
 
 def update_user_profile(
     db: Session, user_id: int, user_data: UserUpdateProfile
-):
+) -> UpdateUserProfileResult:
     """
     Updates a user's profile in the database by their ID.
 
@@ -148,7 +152,7 @@ def update_user_profile(
         user_data (UserUpdateProfile): The user data containing optional fields to update: name, email and avatar.
 
     Returns:
-        bool: True if the user's profile was updated, False otherwise.
+        UpdateUserProfileResult: The result of the operation containing a message and the updated fields.
 
     TODO: if the user tries to update their email, send a verification email to the new email.
     """
@@ -157,11 +161,8 @@ def update_user_profile(
         db, user_id, ["name", "email", "avatar"]
     )
 
-    if not user:
-        return False
-
-    is_updated = False
-    fields_to_update = {}
+    is_updated: bool = False
+    fields_to_update: dict = {}
 
     for field, new_value in user_data.dict().items():
         current_value = getattr(user, field)
@@ -172,4 +173,19 @@ def update_user_profile(
 
     if is_updated:
         db.commit()
-    return fields_to_update
+        if "email" in fields_to_update:
+            fields_to_update.update(
+                {
+                    "message": "We've sent you a verification email. Please check your inbox."
+                    " If you don't see it, check your spam folder or try updating your email later."
+                }
+            )
+        else:
+            fields_to_update.update(
+                {"message": "Profile updated successfully."}
+            )
+    else:
+        fields_to_update.update(
+            {"message": "Your profile is up to date. No changes were made."}
+        )
+    return UpdateUserProfileResult(**fields_to_update)
