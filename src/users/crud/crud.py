@@ -1,15 +1,16 @@
 from sqlalchemy.orm import Session, load_only
 
-from .models import User
-from .schemas import (
+from src.users.models import User
+from src.users.schemas.schemas import (
     UserCreate,
     UserUpdatePassword,
     UserUpdateProfile,
 )
+from .crud_results import UpdateUserPasswordResult, CreateUserResult
 from src.auth.utils import bcrypt_context
 
 
-def create_user(db: Session, user: UserCreate):
+def create_user(db: Session, user: UserCreate) -> CreateUserResult:
     """
     Inserts a new user into the database with a hashed password.
     Due to security reasons, the return value is always the same message, regardless of the outcome.
@@ -42,11 +43,10 @@ def create_user(db: Session, user: UserCreate):
         )
         db.add(new_user)
         db.commit()
-
-    return {
-        "message": "We've sent you a verification email. Please check your inbox."
+    return CreateUserResult(
+        message="We've sent you a verification email. Please check your inbox."
         " If you don't see it, check your spam folder or try again later."
-    }
+    )
 
 
 def get_user_by_email(db: Session, email: str):
@@ -94,13 +94,12 @@ def get_desired_fields_by_user_id(
         .filter(User.id == user_id)  # noqa
         .first()
     )
-
     return user
 
 
 def update_user_password(
     db: Session, user_id: int, user_data: UserUpdatePassword
-):
+) -> UpdateUserPasswordResult:
     """
     Updates a user's password in the database by their ID.
 
@@ -110,20 +109,31 @@ def update_user_password(
         user_data (UserUpdatePassword): The user data containing the old and new passwords.
 
     Returns:
-        User: The user object with the updated password.
+        UpdateUserPasswordResult: The result of the operation containing
+        is_success flag, a message and an optional status code (default is 200).
     """
 
     user = get_desired_fields_by_user_id(db, user_id, ["password"])
 
     if not user:
-        return False
+        return UpdateUserPasswordResult(
+            is_success=False,
+            message="Could not authenticate user.",
+            status_code=404,
+        )
     if not bcrypt_context.verify(user_data.old_password, user.password):
-        return False
+        return UpdateUserPasswordResult(
+            is_success=False,
+            message="Please check your credentials and try again.",
+            status_code=400,
+        )
 
     user.password = bcrypt_context.hash(user_data.password)
-
     db.commit()
-    return user
+    return UpdateUserPasswordResult(
+        is_success=True,
+        message="Password updated successfully. Now you can log in with your new password.",
+    )
 
 
 def update_user_profile(

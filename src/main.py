@@ -4,9 +4,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from .users.router import router as users_router
 from .auth.router import router as auth_router
 from .constants import ALLOWED_ORIGIN
+from .exceptions import (
+    NotAuthenticatedException,
+    not_authenticated_exception_handler,
+    UserNotFoundException,
+    user_not_found_exception_handler,
+    BadRequestException,
+    bad_request_exception_handler,
+)
 
+exception_handlers = {
+    NotAuthenticatedException: not_authenticated_exception_handler,
+    UserNotFoundException: user_not_found_exception_handler,
+    BadRequestException: bad_request_exception_handler,
+}
 
-app = FastAPI()
+app = FastAPI(exception_handlers=exception_handlers)
 
 app.add_middleware(
     CORSMiddleware,
