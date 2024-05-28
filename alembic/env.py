@@ -6,7 +6,10 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from src.users.models import Base
+
+from src.database.database import Base
+from src.api_keys.models import ApiKey
+from src.users.models import User
 
 from alembic import context
 
