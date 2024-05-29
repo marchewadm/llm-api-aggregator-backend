@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
 
 from .crud import crud
 from .schemas.schemas import UserUpdatePassword, UserUpdateProfile

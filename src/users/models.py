@@ -1,14 +1,9 @@
 from typing import Optional
-
-from sqlalchemy import (
-    Column,
-    String,
-    TIMESTAMP,
-    func,
-)
+from sqlalchemy import Column, String, TIMESTAMP, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from src.database.database import Base
+
+from src.api_keys.models import ApiKey
 
 
 class User(Base):

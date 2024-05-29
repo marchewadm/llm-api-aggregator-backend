@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .users.router import router as users_router
 from .auth.router import router as auth_router
+from .api_keys.router import router as api_keys_router
 from .constants import ALLOWED_ORIGIN
 from .exceptions import (
     NotAuthenticatedException,
@@ -31,3 +32,4 @@ app.add_middleware(
 
 app.include_router(users_router)
 app.include_router(auth_router)
+app.include_router(api_keys_router)
