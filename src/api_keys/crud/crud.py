@@ -16,6 +16,7 @@ def get_api_keys_by_user_id(db: Session, user_id: int):
     Returns:
         dict: A dictionary containing the AI model as the key and the API key as the value.
     """
+
     desired_fields = ["key", "ai_model"]
     fields = [getattr(ApiKey, field) for field in desired_fields]
 
@@ -44,33 +45,44 @@ def update_api_keys_by_user_id(
     """
 
     db_api_keys = get_api_keys_by_user_id(db, user_id)
+    new_api_keys_map = {api_key.ai_model: api_key.key for api_key in api_keys}
     is_updated: bool = False
 
-    for api_key in api_keys:
-        if (
-            api_key.ai_model in db_api_keys
-            and api_key.key == db_api_keys[api_key.ai_model]
-        ):
-            continue
-        elif (
-            api_key.ai_model in db_api_keys
-            and api_key.key != db_api_keys[api_key.ai_model]
-        ):
+    # Update existing keys and add new keys
+    for ai_model, new_key in new_api_keys_map.items():
+        if ai_model in db_api_keys:
+            if db_api_keys[ai_model] != new_key:
+                # Update the key in the database
+                db_api_key = (
+                    db.query(ApiKey)
+                    .filter(
+                        ApiKey.user_id == user_id,  # noqa
+                        ApiKey.ai_model == ai_model,  # noqa
+                    )
+                    .first()
+                )
+                db_api_key.key = new_key
+                is_updated = True
+        else:
+            # Add new key to the database
+            new_api_key = ApiKey(
+                key=new_key, ai_model=ai_model, user_id=user_id
+            )
+            db.add(new_api_key)
+            is_updated = True
+
+    # Remove keys that are no longer present in the new list
+    for ai_model in db_api_keys:
+        if ai_model not in new_api_keys_map:
             db_api_key = (
                 db.query(ApiKey)
                 .filter(
                     ApiKey.user_id == user_id,  # noqa
-                    ApiKey.ai_model == api_key.ai_model,  # noqa
+                    ApiKey.ai_model == ai_model,  # noqa
                 )
                 .first()
             )
-            db_api_key.key = api_key.key
-            is_updated = True
-        else:
-            db_api_key = ApiKey(
-                key=api_key.key, ai_model=api_key.ai_model, user_id=user_id
-            )
-            db.add(db_api_key)
+            db.delete(db_api_key)
             is_updated = True
 
     if is_updated:
