@@ -2,16 +2,17 @@ from fastapi import APIRouter
 
 from .crud import crud
 from .schemas.schemas import UserUpdatePassword, UserUpdateProfile
-from .schemas.response_schemas import (
-    GetUserProfileResponse,
-    UpdateUserPasswordResponse,
-    UpdateUserProfileResponse,
-)
 from src.database.dependencies import db_dependency
 from src.auth.dependencies import auth_dependency
 
 from src.exceptions import UserNotFoundException, BadRequestException
-from .openapi_responses import (
+
+from src.openapi.schemas.users import (
+    GetUserProfileResponse,
+    UpdateUserPasswordResponse,
+    UpdateUserProfileResponse,
+)
+from src.openapi.responses import (
     get_profile_responses,
     update_password_responses,
     update_profile_responses,
@@ -61,11 +62,12 @@ async def update_password(
 
     result = crud.update_user_password(db, auth["id"], user_data)
     if not result.is_success:
+        # TODO: probably unnecessary to check for 404 here since it's already being checked in auth_dependency
         if result.status_code == 404:
             raise UserNotFoundException(message=result.message)
         if result.status_code == 400:
             raise BadRequestException(message=result.message)
-    return result.message
+    return result
 
 
 @router.patch(

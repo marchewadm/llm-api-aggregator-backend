@@ -1,20 +1,7 @@
-shared_responses = {
-    401: {
-        "description": "Authentication Error",
-        "content": {
-            "application/json": {
-                "example": {"message": "Could not authenticate user."}
-            }
-        },
-    },
-    404: {
-        "description": "User Not Found Error",
-        "content": {
-            "application/json": {"example": {"message": "User not found."}}
-        },
-    },
-}
+from .shared import shared_responses
 
+
+# Users related API router responses
 get_profile_responses = {401: shared_responses[401]}
 
 update_password_responses = {
@@ -33,3 +20,9 @@ update_password_responses = {
 }
 
 update_profile_responses = {401: shared_responses[401]}
+
+
+# API Keys related API router responses
+get_api_keys_responses = {401: shared_responses[401]}
+
+update_api_keys_responses = {401: shared_responses[401]}
