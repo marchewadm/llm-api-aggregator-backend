@@ -1,11 +1,13 @@
 from sqlalchemy.orm import Session, load_only
 
 from src.api_keys.models import ApiKey
-from src.api_keys.schemas.schemas import ApiKeySchema
 from .crud_results import UpdateApiKeyResult
 
+from src.openapi.schemas.api_keys import GetApiKeysResponse
+from src.api_keys.schemas.schemas import ApiKeySchema
 
-def get_api_keys_by_user_id(db: Session, user_id: int):
+
+def get_api_keys_by_user_id(db: Session, user_id: int) -> GetApiKeysResponse:
     """
     Retrieves all API keys from the database based on the user's ID.
 
@@ -14,7 +16,7 @@ def get_api_keys_by_user_id(db: Session, user_id: int):
         user_id (int): The user's ID.
 
     Returns:
-        dict: A dictionary containing the AI model as the key and the API key as the value.
+        GetApiKeysResponse: A response object containing a list of API keys.
     """
 
     desired_fields = ["key", "ai_model"]
@@ -26,7 +28,13 @@ def get_api_keys_by_user_id(db: Session, user_id: int):
         .filter(ApiKey.user_id == user_id)  # noqa
         .all()
     )
-    return {api_key.ai_model: api_key.key for api_key in api_keys}
+
+    api_key_models = [
+        ApiKeySchema(key=api_key.key, ai_model=api_key.ai_model)
+        for api_key in api_keys
+    ]
+
+    return GetApiKeysResponse(api_key_models)
 
 
 def update_api_keys_by_user_id(
@@ -44,41 +52,48 @@ def update_api_keys_by_user_id(
         UpdateApiKeyResult: The result of the operation containing a message.
     """
 
-    db_api_keys = get_api_keys_by_user_id(db, user_id)
-    new_api_keys_map = {api_key.ai_model: api_key.key for api_key in api_keys}
+    db_api_keys = get_api_keys_by_user_id(db, user_id).model_dump()
+    user_api_keys = {api_key.ai_model: api_key.key for api_key in api_keys}
     is_updated: bool = False
 
-    # Update existing keys and add new keys
-    for ai_model, new_key in new_api_keys_map.items():
-        if ai_model in db_api_keys:
-            if db_api_keys[ai_model] != new_key:
-                # Update the key in the database
-                db_api_key = (
-                    db.query(ApiKey)
-                    .filter(
-                        ApiKey.user_id == user_id,  # noqa
-                        ApiKey.ai_model == ai_model,  # noqa
-                    )
-                    .first()
-                )
-                db_api_key.key = new_key
-                is_updated = True
-        else:
-            # Add new key to the database
-            new_api_key = ApiKey(
-                key=new_key, ai_model=ai_model, user_id=user_id
-            )
-            db.add(new_api_key)
-            is_updated = True
+    for ai_model, api_key in user_api_keys.items():
+        different_key_exists = any(
+            item["ai_model"] == ai_model and item["key"] != api_key
+            for item in db_api_keys
+        )
+        same_key_exists = any(
+            item["ai_model"] == ai_model and item["key"] == api_key
+            for item in db_api_keys
+        )
 
-    # Remove keys that are no longer present in the new list
-    for ai_model in db_api_keys:
-        if ai_model not in new_api_keys_map:
+        if different_key_exists:
+            # If ai_model is present in the database but the key is different, update the key.
             db_api_key = (
                 db.query(ApiKey)
                 .filter(
                     ApiKey.user_id == user_id,  # noqa
                     ApiKey.ai_model == ai_model,  # noqa
+                )
+                .first()
+            )
+
+            db_api_key.key = api_key
+            is_updated = True
+        elif not same_key_exists:
+            # If ai_model is not present in the database, add new record to the database.
+            new_api_key = ApiKey(
+                key=api_key, ai_model=ai_model, user_id=user_id
+            )
+            db.add(new_api_key)
+            is_updated = True
+
+    for record in db_api_keys:
+        if record["ai_model"] not in user_api_keys:
+            db_api_key = (
+                db.query(ApiKey)
+                .filter(
+                    ApiKey.user_id == user_id,  # noqa
+                    ApiKey.ai_model == record["ai_model"],
                 )
                 .first()
             )
