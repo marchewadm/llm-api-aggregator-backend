@@ -1,5 +1,7 @@
 from pydantic import RootModel, BaseModel
-from typing import Dict
+from typing import List
+
+from src.api_keys.schemas.schemas import ApiKeySchema
 
 
 class GetApiKeysResponse(RootModel):
@@ -7,10 +9,10 @@ class GetApiKeysResponse(RootModel):
     Schema for the response body of the GET /api-keys endpoint.
 
     Attributes:
-        - root (Dict[str, str]): The user's API keys.
+        - root (List[ApiKeySchema]): A list of API keys.
     """
 
-    root: Dict[str, str]
+    root: List[ApiKeySchema]
 
 
 class UpdateApiKeysResponse(BaseModel):
