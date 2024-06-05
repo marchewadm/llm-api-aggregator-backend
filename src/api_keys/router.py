@@ -36,19 +36,6 @@ async def get_api_keys(auth: auth_dependency, db: db_dependency):
     return result
 
 
-@router.get("/ai-models")
-async def get_ai_models(auth: auth_dependency, db: db_dependency):
-    """
-    Retrieves all AI models from the database based on the user's ID retrieved from the auth_dependency.
-
-    Returns:
-    - A JSONResponse with the user's AI models.
-    - A NotAuthenticatedException if the user is not authenticated (e.g. token is invalid or expired)
-    """
-
-    return crud.get_ai_models_by_user_id(db, auth["id"])
-
-
 @router.patch(
     "/update",
     response_model=UpdateApiKeysResponse,

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, load_only
 
-from src.users.models import User
+from src.database.models import User
 from src.users.schemas.schemas import (
     UserCreate,
     UserUpdatePassword,

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, load_only
 
-from src.api_keys.models import ApiKey
+from src.database.models import ApiKey
 from .crud_results import UpdateApiKeyResult
 
 from src.openapi.schemas.api_keys import GetApiKeysResponse
@@ -35,28 +35,6 @@ def get_api_keys_by_user_id(db: Session, user_id: int) -> GetApiKeysResponse:
     ]
 
     return GetApiKeysResponse(api_key_models)
-
-
-def get_ai_models_by_user_id(db: Session, user_id: int) -> list[str]:
-    """
-    Retrieves all AI models from the database based on the user's ID.
-
-    Args:
-        db (Session): The database session.
-        user_id (int): The user's ID.
-
-    # Returns:
-    #     list[str]: A list of AI models.
-    """
-
-    ai_models = (
-        db.query(ApiKey.ai_model)
-        .filter(ApiKey.user_id == user_id)  # noqa
-        .order_by(ApiKey.id.asc())
-        .all()
-    )
-
-    return [ai_model[0] for ai_model in ai_models]
 
 
 def update_api_keys_by_user_id(
