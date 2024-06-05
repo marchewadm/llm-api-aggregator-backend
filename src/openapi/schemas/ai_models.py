@@ -1,5 +1,5 @@
 from pydantic import RootModel, BaseModel
-from typing import Dict
+from typing import Dict, List
 
 
 class AiModel(BaseModel):
@@ -24,3 +24,7 @@ class GetAiModelsResponse(RootModel):
     """
 
     root: Dict[str, AiModel]
+
+
+class GetUserAiModelNamesResponse(RootModel):
+    root: List[str]

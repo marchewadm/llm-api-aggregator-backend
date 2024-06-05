@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, load_only
 
-from src.api_keys.models import ApiKey
+from src.database.models import ApiKey
 from .crud_results import UpdateApiKeyResult
 
 from src.openapi.schemas.api_keys import GetApiKeysResponse
