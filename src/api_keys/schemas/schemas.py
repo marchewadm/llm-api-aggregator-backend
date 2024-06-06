@@ -10,5 +10,6 @@ class ApiKeySchema(BaseModel):
             min_length=1,
             max_length=15,
             validation_alias=AliasChoices("ai_model", "aiModel"),
+            serialization_alias="aiModel",
         ),
     ]

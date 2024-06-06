@@ -1,11 +1,11 @@
 from fastapi import APIRouter
 
-from .services.service import load_ai_models
-
 from src.database.dependencies import db_dependency
 from src.auth.dependencies import auth_dependency
 
+from .services.service import load_ai_models
 from .schemas.schemas import AiModelResponseCollection
+
 from src.openapi.responses import get_ai_models_responses
 
 
