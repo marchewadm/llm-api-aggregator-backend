@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from src.database.models import ApiKey
 
 
-def get_ai_models_by_user_id(db: Session, user_id: int) -> list[str]:
+def get_user_ai_model_names(db: Session, user_id: int) -> list[str]:
     """
-    Retrieves all AI models from the database based on the user's ID.
+    Retrieves all AI model names associated with the user from the database based on the user's ID.
 
     Args:
         db (Session): The database session.

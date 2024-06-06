@@ -28,4 +28,4 @@ get_api_keys_responses = {401: shared_responses[401]}
 update_api_keys_responses = {401: shared_responses[401]}
 
 # AI models related API router responses
-get_user_ai_model_names_responses = {401: shared_responses[401]}
+get_ai_models_responses = {401: shared_responses[401]}
