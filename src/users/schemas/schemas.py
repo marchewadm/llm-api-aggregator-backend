@@ -4,24 +4,8 @@ from pydantic import (
     EmailStr,
     field_validator,
     ValidationInfo,
-    ConfigDict,
     Field,
 )
-
-
-class ApiKeyBase(BaseModel):
-    key: str
-
-
-class ApiKeyCreate(ApiKeyBase):
-    pass
-
-
-class ApiKey(ApiKeyBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    user_id: int
 
 
 class UserBase(BaseModel):
@@ -72,10 +56,3 @@ class UserUpdateProfile(BaseModel):
     avatar: Optional[str] = None
     name: Optional[Annotated[str, Field(min_length=1)]] = None
     email: Optional[EmailStr] = None
-
-
-class User(UserBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    api_keys: list[ApiKey] = []

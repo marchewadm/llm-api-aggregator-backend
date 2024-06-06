@@ -71,6 +71,12 @@ NOTE:
 
 - The ALLOWED_ORIGIN variable should be set to the address of the API consumer. If you are running the frontend locally, you should set it to `http://localhost:5173` as it is the default address for the frontend running on Vite.
 
+After creating the `.env` file, you should run the following command to create the database tables:
+
+```bash
+alembic upgrade head
+```
+
 And that's it! Now you can proceed to the next step: running your new, freshly installed and configured app.
 
 ## Usage
