@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .users.router import router as users_router
 from .auth.router import router as auth_router
 from .api_keys.router import router as api_keys_router
-from .ai_models.router import router as ai_models_router
+from .api_providers.router import router as api_providers_router
 
 from .constants import ALLOWED_ORIGIN
 from .exceptions import (
@@ -35,4 +35,4 @@ app.add_middleware(
 app.include_router(users_router)
 app.include_router(auth_router)
 app.include_router(api_keys_router)
-app.include_router(ai_models_router)
+app.include_router(api_providers_router)

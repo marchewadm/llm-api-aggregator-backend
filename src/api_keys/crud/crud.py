@@ -19,7 +19,7 @@ def get_api_keys_by_user_id(db: Session, user_id: int) -> GetApiKeysResponse:
         GetApiKeysResponse: A response object containing a list of API keys.
     """
 
-    desired_fields = ["key", "ai_model"]
+    desired_fields = ["key", "api_provider"]
     fields = [getattr(ApiKey, field) for field in desired_fields]
 
     api_keys = (
@@ -30,7 +30,7 @@ def get_api_keys_by_user_id(db: Session, user_id: int) -> GetApiKeysResponse:
     )
 
     api_key_models = [
-        ApiKeySchema(key=api_key.key, ai_model=api_key.ai_model)
+        ApiKeySchema(key=api_key.key, api_provider=api_key.api_provider)
         for api_key in api_keys
     ]
 
@@ -53,26 +53,26 @@ def update_api_keys_by_user_id(
     """
 
     db_api_keys = get_api_keys_by_user_id(db, user_id).model_dump()
-    user_api_keys = {api_key.ai_model: api_key.key for api_key in api_keys}
+    user_api_keys = {api_key.api_provider: api_key.key for api_key in api_keys}
     is_updated: bool = False
 
-    for ai_model, api_key in user_api_keys.items():
+    for api_provider, api_key in user_api_keys.items():
         different_key_exists = any(
-            item["ai_model"] == ai_model and item["key"] != api_key
+            item["api_provider"] == api_provider and item["key"] != api_key
             for item in db_api_keys
         )
         same_key_exists = any(
-            item["ai_model"] == ai_model and item["key"] == api_key
+            item["api_provider"] == api_provider and item["key"] == api_key
             for item in db_api_keys
         )
 
         if different_key_exists:
-            # If ai_model is present in the database but the key is different, update the key.
+            # If api_provider is present in the database but the key is different, update the key.
             db_api_key = (
                 db.query(ApiKey)
                 .filter(
                     ApiKey.user_id == user_id,  # noqa
-                    ApiKey.ai_model == ai_model,  # noqa
+                    ApiKey.api_provider == api_provider,  # noqa
                 )
                 .first()
             )
@@ -80,20 +80,20 @@ def update_api_keys_by_user_id(
             db_api_key.key = api_key
             is_updated = True
         elif not same_key_exists:
-            # If ai_model is not present in the database, add new record to the database.
+            # If api_provider is not present in the database, add new record to the database.
             new_api_key = ApiKey(
-                key=api_key, ai_model=ai_model, user_id=user_id
+                key=api_key, api_provider=api_provider, user_id=user_id
             )
             db.add(new_api_key)
             is_updated = True
 
     for record in db_api_keys:
-        if record["ai_model"] not in user_api_keys:
+        if record["api_provider"] not in user_api_keys:
             db_api_key = (
                 db.query(ApiKey)
                 .filter(
                     ApiKey.user_id == user_id,  # noqa
-                    ApiKey.ai_model == record["ai_model"],
+                    ApiKey.api_provider == record["api_provider"],
                 )
                 .first()
             )

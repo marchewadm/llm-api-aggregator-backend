@@ -29,11 +29,11 @@ class User(Base):
 
 class ApiKey(Base):
     __tablename__ = "api_keys"
-    __table_args__ = (UniqueConstraint("ai_model", "user_id"),)
+    __table_args__ = (UniqueConstraint("api_provider", "user_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     key: Mapped[str]
-    ai_model: Mapped[str] = mapped_column(String(15), unique=True)
+    api_provider: Mapped[str] = mapped_column(String(15), unique=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     user = relationship("User", back_populates="api_keys")
