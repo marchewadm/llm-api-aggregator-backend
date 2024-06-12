@@ -1,6 +1,11 @@
-# chattyAI
+# chattyAI (WIP)
 
-Chatty AI is a tool that allows you to store your chats from various LLMs in one place. Its backend is built on FastAPI, SQLAlchemy for communicating with a PostgreSQL database, and Pydantic for creating schemas.
+Chatty AI is a tool that allows you to store your chats from various LLMs in one place, making it easier to manage them.
+Its backend is built on FastAPI, SQLAlchemy for communicating with a PostgreSQL database, and Pydantic for creating schemas.
+
+## Supported APIs
+
+Currently, the project is in the integration phase with OpenAI's API.
 
 ## Prerequisites
 
@@ -57,19 +62,24 @@ The `.env` file should look like this:
 
 ```
 DB_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE
-JWT_SECRET_KEY=YOUR_SECRET_KEY
+JWT_AUTH_SECRET_KEY=YOUR_GENERATED_AUTH_SECRET_KEY
+JWT_API_SECRET_KEY=YOUR_GENERATED_API_SECRET_KEY
 ALLOWED_ORIGIN=YOUR_API_CONSUMER
 ```
 
-NOTE:
+#### NOTE:
 - Remember to adjust DB_URL according to your database username and password. If the project is running locally, you should set the host and port as `localhost:5432` (or `127.0.0.1:5432` if it doesn't work) since it is running on your local machine and `5432` is the default port for PostgreSQL.
 
-- You can generate the JWT_SECRET_KEY by executing this command in your console:
+
+- You can generate both the JWT_AUTH_SECRET_KEY and JWT_API_SECRET_KEY by executing this command in your console:
   ```bash
   openssl rand -hex 32
   ```
 
 - The ALLOWED_ORIGIN variable should be set to the address of the API consumer. If you are running the frontend locally, you should set it to `http://localhost:5173` as it is the default address for the frontend running on Vite.
+
+#### SECURITY WARNING:
+- To enhance security, you should generate a separate key for the JWT_AUTH_SECRET_KEY and JWT_API_SECRET_KEY. This way, if one of the keys gets compromised, the other one will still be safe.
 
 After creating the `.env` file, you should run the following command to create the database tables:
 
