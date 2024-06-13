@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class GetUserProfileResponse(BaseModel):
@@ -10,11 +10,13 @@ class GetUserProfileResponse(BaseModel):
         - name (str): The user's name.
         - email (EmailStr): The user's email.
         - avatar (str | None): The user's avatar URL, if available.
+        - is_passphrase (bool): The user's passphrase status. True if the user has configured a passphrase.
     """
 
     name: str
     email: EmailStr
     avatar: str | None = None
+    is_passphrase: bool = Field(serialization_alias="isPassphrase")
 
 
 class UpdateUserPasswordResponse(BaseModel):

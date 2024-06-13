@@ -37,7 +37,7 @@ async def get_profile(auth: auth_dependency, db: db_dependency):
     """
 
     result = crud.get_desired_fields_by_user_id(
-        db, auth["id"], ["name", "email", "avatar"]
+        db, auth["id"], ["name", "email", "avatar", "is_passphrase"]
     )
     return result
 
