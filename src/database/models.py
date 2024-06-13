@@ -14,6 +14,7 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(50))
     email: Mapped[str] = mapped_column(unique=True)
     password: Mapped[str]
+    passphrase: Mapped[Optional[str]]
     avatar: Mapped[Optional[str]]
     is_verified: Mapped[bool] = mapped_column(default=False)
     is_password_reset_requested: Mapped[bool] = mapped_column(default=False)
