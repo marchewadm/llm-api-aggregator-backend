@@ -19,6 +19,8 @@ update_password_responses = {
     404: shared_responses[404],
 }
 
+update_passphrase_responses = {401: shared_responses[401]}
+
 update_profile_responses = {401: shared_responses[401]}
 
 

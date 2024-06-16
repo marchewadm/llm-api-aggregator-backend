@@ -10,11 +10,13 @@ from src.exceptions import UserNotFoundException, BadRequestException
 from src.openapi.schemas.users import (
     GetUserProfileResponse,
     UpdateUserPasswordResponse,
+    UpdateUserPassphraseResponse,
     UpdateUserProfileResponse,
 )
 from src.openapi.responses import (
     get_profile_responses,
     update_password_responses,
+    update_passphrase_responses,
     update_profile_responses,
 )
 
@@ -67,6 +69,24 @@ async def update_password(
             raise UserNotFoundException(message=result.message)
         if result.status_code == 400:
             raise BadRequestException(message=result.message)
+    return result
+
+
+@router.patch(
+    "/update-passphrase",
+    response_model=UpdateUserPassphraseResponse,
+    responses={**update_passphrase_responses},
+)
+async def update_passphrase(auth: auth_dependency, db: db_dependency):
+    """
+    Updates the user's passphrase in the database by user's ID retrieved from the auth_dependency.
+
+    Returns:
+    - A JSONResponse with a passphrase if the operation is successful.
+    - A NotAuthenticatedException if the user is not authenticated (e.g. token is invalid or expired)
+    """
+
+    result = crud.update_user_passphrase(db, auth["id"])
     return result
 
 

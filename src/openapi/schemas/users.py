@@ -30,6 +30,17 @@ class UpdateUserPasswordResponse(BaseModel):
     message: str
 
 
+class UpdateUserPassphraseResponse(BaseModel):
+    """
+    Schema for the response body of the PATCH /user/update-passphrase endpoint.
+
+    Attributes:
+        - passphrase (str): The user's new passphrase.
+    """
+
+    passphrase: str
+
+
 class UpdateUserProfileResponse(BaseModel):
     """
     Schema for the response body of the PATCH /user/update-profile endpoint.
