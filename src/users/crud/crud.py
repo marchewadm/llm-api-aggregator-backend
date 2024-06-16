@@ -10,8 +10,10 @@ from .crud_results import (
     CreateUserResult,
     UpdateUserPasswordResult,
     UpdateUserProfileResult,
+    UpdateUserPassphraseResult,
 )
 from src.auth.utils import bcrypt_context
+from ..utils.utils import generate_salt, generate_strong_passphrase
 
 
 def create_user(db: Session, user: UserCreate) -> CreateUserResult:
@@ -138,6 +140,36 @@ def update_user_password(
         is_success=True,
         message="Password updated successfully. Now you can log in with your new password.",
     )
+
+
+def update_user_passphrase(
+    db: Session, user_id: int
+) -> UpdateUserPassphraseResult:
+    """
+    Updates a user's passphrase in the database by their ID.
+
+    Args:
+        db (Session): The database session.
+        user_id (int): The user's ID.
+
+    Returns:
+        UpdateUserPassphraseResult: The result of the operation containing the generated passphrase.
+    """
+
+    user = get_desired_fields_by_user_id(
+        db, user_id, ["passphrase", "passphrase_salt", "is_passphrase"]
+    )
+    passphrase = generate_strong_passphrase().encode()
+    salt = generate_salt()
+
+    user.passphrase = passphrase
+    user.passphrase_salt = salt
+
+    if not user.is_passphrase:
+        user.is_passphrase = True
+
+    db.commit()
+    return UpdateUserPassphraseResult(passphrase=passphrase.decode())
 
 
 def update_user_profile(

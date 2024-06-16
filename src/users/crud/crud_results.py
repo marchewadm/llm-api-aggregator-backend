@@ -20,3 +20,8 @@ class UpdateUserProfileResult:
     name: Optional[str] = None
     email: Optional[str] = None
     avatar: Optional[str] = None
+
+
+@dataclass
+class UpdateUserPassphraseResult:
+    passphrase: str
