@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, load_only
 
-from src.database.models import User
+from src.database.models import User, ApiKey
 from src.users.schemas.schemas import (
     UserCreate,
     UserUpdatePassword,
@@ -147,6 +147,7 @@ def update_user_passphrase(
 ) -> UpdateUserPassphraseResult:
     """
     Updates a user's passphrase in the database by their ID.
+    All API keys associated with the user are deleted.
 
     Args:
         db (Session): The database session.
@@ -167,6 +168,8 @@ def update_user_passphrase(
 
     if not user.is_passphrase:
         user.is_passphrase = True
+
+    db.query(ApiKey).filter(ApiKey.user_id == user_id).delete()  # noqa
 
     db.commit()
     return UpdateUserPassphraseResult(passphrase=passphrase.decode())
