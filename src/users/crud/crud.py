@@ -14,6 +14,7 @@ from .crud_results import (
 )
 from src.auth.utils import bcrypt_context
 from ..utils.utils import generate_salt, generate_strong_passphrase
+from src.common.utils import convert_bytes_to_hex
 
 
 def create_user(db: Session, user: UserCreate) -> CreateUserResult:
@@ -103,6 +104,15 @@ def get_desired_fields_by_user_id(
     return user
 
 
+def get_user_passphrase(db: Session, user_id: int):
+    """"""
+
+    user = get_desired_fields_by_user_id(
+        db, user_id, ["passphrase", "passphrase_salt"]
+    )
+    return user
+
+
 def update_user_password(
     db: Session, user_id: int, user_data: UserUpdatePassword
 ) -> UpdateUserPasswordResult:
@@ -160,10 +170,10 @@ def update_user_passphrase(
     user = get_desired_fields_by_user_id(
         db, user_id, ["passphrase", "passphrase_salt", "is_passphrase"]
     )
-    passphrase = generate_strong_passphrase().encode()
-    salt = generate_salt()
+    passphrase = generate_strong_passphrase()
+    salt = convert_bytes_to_hex(generate_salt())
 
-    user.passphrase = passphrase
+    user.passphrase = bcrypt_context.hash(passphrase)
     user.passphrase_salt = salt
 
     if not user.is_passphrase:
@@ -172,7 +182,7 @@ def update_user_passphrase(
     db.query(ApiKey).filter(ApiKey.user_id == user_id).delete()  # noqa
 
     db.commit()
-    return UpdateUserPassphraseResult(passphrase=passphrase.decode())
+    return UpdateUserPassphraseResult(passphrase=passphrase)
 
 
 def update_user_profile(

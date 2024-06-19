@@ -29,6 +29,10 @@ class UserLogin(UserBase):
     password: Annotated[str, Field(min_length=8)]
 
 
+class UserPassphrase(BaseModel):
+    passphrase: str
+
+
 class UserUpdatePassword(BaseModel):
     old_password: Annotated[
         str, Field(min_length=8, validation_alias="currentPassword")

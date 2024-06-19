@@ -5,7 +5,7 @@ from fastapi import Depends
 from jose import JWTError, jwt
 
 from .utils import bcrypt_context, oauth2_bearer
-from src.constants import JWT_SECRET_KEY, ALGORITHM
+from src.constants import JWT_AUTH_SECRET_KEY, ALGORITHM
 from src.database.dependencies import db_dependency
 from src.users.crud.crud import get_user_by_email
 from src.exceptions import NotAuthenticatedException
@@ -33,14 +33,14 @@ def create_access_token(email: str, user_id: int, expires_delta: timedelta):
     expires = datetime.now(UTC) + expires_delta
     encode.update({"exp": expires})
 
-    return jwt.encode(encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(encode, JWT_AUTH_SECRET_KEY, algorithm=ALGORITHM)
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     """Retrieves the current user from the token."""
 
     try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, JWT_AUTH_SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         user_id: int = payload.get("id")
 

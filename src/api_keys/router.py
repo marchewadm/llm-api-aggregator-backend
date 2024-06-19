@@ -4,8 +4,10 @@ from .crud import crud
 
 from src.database.dependencies import db_dependency
 from src.auth.dependencies import auth_dependency
+from .dependencies import api_dependency
 
 from .schemas.schemas import ApiKeySchema
+from src.users.schemas.schemas import UserPassphrase
 
 from src.openapi.schemas.api_keys import (
     GetApiKeysResponse,
@@ -29,11 +31,23 @@ async def get_api_keys(auth: auth_dependency, db: db_dependency):
 
     Returns:
     - A JSONResponse with the user's API keys.
-    - A NotAuthenticatedException if the user is not authenticated (e.g. token is invalid or expired)
+    - A NotAuthenticatedException if the user is not authenticated (e.g. token is invalid or expired).
     """
 
     result = crud.get_api_keys_by_user_id(db, auth["id"])
     return result
+
+
+@router.post("/test")
+async def get_test_keys(
+    passphrase: UserPassphrase,
+    auth: auth_dependency,
+    db: db_dependency,
+    fernet_key: api_dependency,
+):
+    """"""
+    print(fernet_key)
+    return
 
 
 @router.patch(
@@ -49,7 +63,7 @@ async def update_api_keys(
 
     Returns:
     - A JSONResponse with a message if the operation is successful.
-    - A NotAuthenticatedException if the user is not authenticated (e.g. token is invalid or expired)
+    - A NotAuthenticatedException if the user is not authenticated (e.g. token is invalid or expired).
     """
 
     result = crud.update_api_keys_by_user_id(db, auth["id"], user_data)
