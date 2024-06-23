@@ -7,8 +7,8 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from src.database.database import Base
-from src.database.models import User, ApiKey
+from src.database.core import Base
+from src.auth.models import User
 
 from alembic import context
 
@@ -18,7 +18,7 @@ load_dotenv()
 
 config = context.config
 
-config.set_main_option("sqlalchemy.url", os.getenv("DB_URL"))
+config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

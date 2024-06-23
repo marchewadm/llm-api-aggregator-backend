@@ -2,7 +2,7 @@ import datetime
 from typing import Optional
 
 from sqlalchemy import String, DateTime, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database.core import Base
 
@@ -27,5 +27,3 @@ class User(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-
-    api_keys = relationship("ApiKey", back_populates="user")
