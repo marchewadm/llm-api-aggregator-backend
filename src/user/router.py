@@ -12,10 +12,11 @@ from .schemas import (
 )
 
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+auth_router = APIRouter(prefix="/auth", tags=["auth"])
+user_router = APIRouter(prefix="/user", tags=["user"])
 
 
-@router.post("/login", response_model=UserLoginResponse)
+@auth_router.post("/login", response_model=UserLoginResponse)
 async def login_user(
     payload: Annotated[OAuth2PasswordRequestForm, Depends()],
     user_service: UserServiceDependency,
@@ -24,7 +25,7 @@ async def login_user(
     return result
 
 
-@router.post("/register", response_model=UserRegisterResponse)
+@auth_router.post("/register", response_model=UserRegisterResponse)
 async def register_user(
     payload: UserRegister, user_service: UserServiceDependency
 ):
