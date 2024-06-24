@@ -1,4 +1,4 @@
-from typing import Annotated, Self
+from typing import Annotated, Optional, Self
 
 from pydantic import (
     BaseModel,
@@ -8,17 +8,27 @@ from pydantic import (
     Field,
     field_validator,
     model_validator,
+    ConfigDict,
 )
 
 from src.utils import create_hash
 
 
 class UserBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     email: EmailStr
 
 
+class UserLogin(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: int = Field(validation_alias="id")
+    password: SecretStr
+
+
 class UserRegister(UserBase):
-    name: Annotated[str, Field(min_length=1)]
+    name: Annotated[str, Field(min_length=1, max_length=50)]
     password: Annotated[SecretStr | str, Field(min_length=8)]
     password_2: Annotated[SecretStr, Field(min_length=8)]
 
@@ -45,6 +55,12 @@ class UserCurrent(UserBase):
     user_id: int
 
 
+class UserProfile(UserBase):
+    name: Annotated[str, Field(min_length=1, max_length=50)]
+    avatar: Optional[str] = None
+    passphrase: Optional[SecretStr] = None
+
+
 class UserLoginResponse(BaseModel):
     access_token: str
     token_type: str
@@ -52,3 +68,7 @@ class UserLoginResponse(BaseModel):
 
 class UserRegisterResponse(BaseModel):
     message: str
+
+
+class UserProfileResponse(UserProfile):
+    pass
