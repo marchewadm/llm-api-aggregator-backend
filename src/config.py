@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     ALLOWED_ORIGIN: str
     JWT_AUTH_SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_IN_MINUTES: int = 180
 
     model_config = SettingsConfigDict(
         case_sensitive=True,
@@ -22,7 +24,7 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """
-    This function is used to get the settings of the application.
+    Used to get the settings of the application.
 
     Returns:
         Settings: The settings of the application.
