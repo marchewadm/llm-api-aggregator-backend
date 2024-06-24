@@ -41,6 +41,10 @@ class UserRegister(UserBase):
         return self
 
 
+class UserCurrent(UserBase):
+    user_id: int
+
+
 class UserLoginResponse(BaseModel):
     access_token: str
     token_type: str
