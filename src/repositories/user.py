@@ -4,8 +4,8 @@ from fastapi import Depends
 
 from src.database.core import get_db
 
-from src.auth.models import User
-from src.auth.schemas import UserRegister
+from src.user.models import User
+from src.user.schemas import UserRegister
 
 
 class UserRepository:

@@ -8,7 +8,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from src.database.core import Base
-from src.auth.models import User
+from src.user.models import User
 
 from alembic import context
 
