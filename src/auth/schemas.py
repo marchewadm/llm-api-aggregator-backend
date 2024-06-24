@@ -10,15 +10,11 @@ from pydantic import (
     model_validator,
 )
 
-from src.utils import bcrypt_context
+from src.utils import create_hash
 
 
 class UserBase(BaseModel):
     email: EmailStr
-
-
-class UserLogin(UserBase):
-    password: Annotated[SecretStr, Field(min_length=8)]
 
 
 class UserRegister(UserBase):
@@ -41,8 +37,13 @@ class UserRegister(UserBase):
 
     @model_validator(mode="after")
     def hash_password(self) -> Self:
-        self.password = bcrypt_context.hash(self.password.get_secret_value())
+        self.password = create_hash(self.password.get_secret_value())
         return self
+
+
+class UserLoginResponse(BaseModel):
+    access_token: str
+    token_type: str
 
 
 class UserRegisterResponse(BaseModel):

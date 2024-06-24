@@ -1,8 +1,15 @@
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 
 from src.repositories.user import UserRepository
+from src.utils import verify_hash
 
-from .schemas import UserRegister, UserRegisterResponse
+from .utils import create_access_token
+from .schemas import (
+    UserLoginResponse,
+    UserRegister,
+    UserRegisterResponse,
+)
 
 
 class UserService:
@@ -14,6 +21,24 @@ class UserService:
         self, repository: UserRepository = Depends(UserRepository)
     ) -> None:
         self.repository = repository
+
+    def authenticate(
+        self, payload: OAuth2PasswordRequestForm
+    ) -> UserLoginResponse:
+        user = self.repository.get_by_email(payload.username)
+
+        if not user or not verify_hash(payload.password, user.password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Your email or password is incorrect. Please try again.",
+            )
+
+        token = create_access_token(
+            payload.username,
+            user.id,
+        )
+
+        return UserLoginResponse(access_token=token, token_type="bearer")
 
     def create(self, payload: UserRegister) -> UserRegisterResponse:
         is_email_taken = self.repository.get_by_email(payload.email)
