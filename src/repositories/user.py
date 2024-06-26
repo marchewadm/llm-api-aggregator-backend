@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session, load_only
 
 from fastapi import Depends
@@ -110,3 +110,42 @@ class UserRepository:
             )
             .where(self.model.email == email)
         ).first()
+
+    def get_password_by_id(self, user_id: int) -> User:
+        """
+        Get the user password by user id.
+
+        Args:
+            user_id (int): User id.
+
+        Returns:
+            User: User object containing the user's password.
+        """
+
+        return self.db.scalars(
+            select(self.model)
+            .options(load_only(self.model.password, raiseload=True))
+            .where(self.model.id == user_id)
+        ).first()
+
+    def update_password_by_id(
+        self, user_id: int, hashed_new_password: str
+    ) -> None:
+        """
+        Update the user's password by user id.
+
+        Args:
+            user_id (int): User id.
+            hashed_new_password (str): Hashed new password.
+
+        Returns:
+            None
+        """
+
+        self.db.execute(
+            update(self.model)
+            .where(self.model.id == user_id)
+            .values({self.model.password: hashed_new_password})
+        )
+        self.db.commit()
+        return

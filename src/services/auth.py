@@ -108,6 +108,9 @@ class AuthService:
         Args:
             payload (OAuth2PasswordRequestForm): The user's email and password.
 
+        Raises:
+            HTTPException: Raised with a 401 status code if the user does not exist or the password is incorrect.
+
         Returns:
             AuthLoginResponse: The access token and token type.
         """
