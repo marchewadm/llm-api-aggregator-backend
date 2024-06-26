@@ -112,7 +112,9 @@ class AuthService:
             AuthLoginResponse: The access token and token type.
         """
 
-        user = self.repository.get_id_and_password_by_email(payload.username)
+        user = self.repository.get_user_id_and_password_by_email(
+            payload.username
+        )
 
         if not user or not hash_util.verify_hash(
             payload.password, user.password
@@ -137,7 +139,7 @@ class AuthService:
             Message can be customized, but defaults to the one in the schema.
         """
 
-        user = self.repository.get_by_email(payload.email)
+        user = self.repository.get_user_id_by_email(payload.email)
 
         if not user:
             self.repository.create(payload)

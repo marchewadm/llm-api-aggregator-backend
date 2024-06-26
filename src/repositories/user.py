@@ -51,57 +51,62 @@ class UserRepository:
         self.db.commit()
         return
 
-    def get_profile_by_id(self, user_id: int):
+    def get_profile_by_id(self, user_id: int) -> User:
         """
         Get the user profile by user id.
 
         Args:
             user_id (int): User id.
 
-        TODO: Add type hinting for the return value, maybe by using protocol.
-        TODO: https://github.com/sqlalchemy/sqlalchemy/discussions/10760
+        Returns:
+            User: User object containing the user's email, name, avatar and passphrase.
         """
 
-        return self.db.execute(
-            select(
-                self.model.email,
-                self.model.name,
-                self.model.avatar,
-                self.model.passphrase,
-            ).where(self.model.id == user_id)
+        return self.db.scalars(
+            select(self.model)
+            .options(
+                load_only(
+                    self.model.email,
+                    self.model.name,
+                    self.model.avatar,
+                    self.model.passphrase,
+                )
+            )
+            .where(self.model.id == user_id)
         ).first()
 
-    def get_by_email(self, email: str):
+    def get_user_id_by_email(self, email: str) -> User:
         """
         Get the user by email.
 
         Args:
             email (str): User email.
 
-        TODO: Add type hinting for the return value, maybe by using protocol.
-        TODO: https://github.com/sqlalchemy/sqlalchemy/discussions/10760
+        Returns:
+            User: User object containing the user's id if found.
         """
 
-        return (
-            self.db.query(self.model)
-            .options(load_only(self.model.id))
-            .filter(self.model.email == email)  # noqa
-            .first()
-        )
+        return self.db.scalars(
+            select(self.model)
+            .options(load_only(self.model.id, raiseload=True))
+            .where(self.model.email == email)
+        ).first()
 
-    def get_id_and_password_by_email(self, email: str):
+    def get_user_id_and_password_by_email(self, email: str) -> User:
         """
         Get the user id and password by email.
 
         Args:
             email (str): User email.
 
-        TODO: Add type hinting for the return value, maybe by using protocol.
-        TODO: https://github.com/sqlalchemy/sqlalchemy/discussions/10760
+        Returns:
+            User: User object containing the user's id and password if found.
         """
 
-        return self.db.execute(
-            select(self.model.id, self.model.password).where(
-                self.model.email == email
+        return self.db.scalars(
+            select(self.model)
+            .options(
+                load_only(self.model.id, self.model.password, raiseload=True)
             )
+            .where(self.model.email == email)
         ).first()

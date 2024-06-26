@@ -41,9 +41,4 @@ class UserService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
             )
-        return UserProfileResponse(
-            email=user.email,
-            name=user.name,
-            avatar=user.avatar,
-            passphrase=user.passphrase,
-        )
+        return UserProfileResponse(**user.__dict__)
