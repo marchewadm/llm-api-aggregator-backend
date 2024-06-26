@@ -1,33 +1,25 @@
-from typing import Annotated, Optional, Self
+from typing import Annotated, Self
 
 from pydantic import (
     BaseModel,
     EmailStr,
     SecretStr,
-    ValidationInfo,
     Field,
+    ValidationInfo,
     field_validator,
     model_validator,
-    ConfigDict,
 )
 
-from src.utils import create_hash
+from src.utils.hash import hash_util
 
 
-class UserBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    email: EmailStr
-
-
-class UserLogin(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class AuthLogin(BaseModel):
     user_id: int = Field(validation_alias="id")
     password: SecretStr
 
 
-class UserRegister(UserBase):
+class AuthRegister(BaseModel):
+    email: EmailStr
     name: Annotated[str, Field(min_length=1, max_length=50)]
     password: Annotated[SecretStr | str, Field(min_length=8)]
     password_2: Annotated[SecretStr, Field(min_length=8)]
@@ -47,28 +39,22 @@ class UserRegister(UserBase):
 
     @model_validator(mode="after")
     def hash_password(self) -> Self:
-        self.password = create_hash(self.password.get_secret_value())
+        self.password = hash_util.create_hash(self.password.get_secret_value())
         return self
 
 
-class UserCurrent(UserBase):
+class AuthCurrentUser(BaseModel):
+    email: EmailStr
     user_id: int
 
 
-class UserProfile(UserBase):
-    name: Annotated[str, Field(min_length=1, max_length=50)]
-    avatar: Optional[str] = None
-    passphrase: Optional[SecretStr] = None
-
-
-class UserLoginResponse(BaseModel):
+class AuthLoginResponse(BaseModel):
     access_token: str
     token_type: str
 
 
-class UserRegisterResponse(BaseModel):
-    message: str
-
-
-class UserProfileResponse(UserProfile):
-    pass
+class AuthRegisterResponse(BaseModel):
+    message: str = (
+        "We've sent you a verification email. Please check your inbox."
+        " If you don't see it, check your spam folder or try again later."
+    )

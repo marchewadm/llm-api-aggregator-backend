@@ -2,11 +2,14 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from src.user.service import UserService
-from src.user.schemas import UserCurrent
-from src.user.utils import get_current_user
+from src.services.auth import AuthService
+from src.services.user import UserService
 
+from src.schemas.auth import AuthCurrentUser
 
+AuthServiceDependency = Annotated[AuthService, Depends(AuthService)]
 UserServiceDependency = Annotated[UserService, Depends(UserService)]
 
-AuthDependency = Annotated[UserCurrent, Depends(get_current_user)]
+AuthDependency = Annotated[
+    AuthCurrentUser, Depends(AuthService.get_current_user)
+]
