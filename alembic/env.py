@@ -11,6 +11,7 @@ from src.database.core import Base
 
 from src.models.user import User
 from src.models.api_provider import ApiProvider
+from src.models.api_key import ApiKey
 
 from alembic import context
 

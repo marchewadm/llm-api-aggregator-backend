@@ -2,14 +2,12 @@ import datetime
 from typing import Optional
 
 from sqlalchemy import String, DateTime, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.core import Base
 
 
 class User(Base):
-    # TODO: instead of creating a column named "is_passphrase", just create a function that checks if passphrase != null
-
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -27,3 +25,5 @@ class User(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+    api_keys = relationship("ApiKey", back_populates="user")

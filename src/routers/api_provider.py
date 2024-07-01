@@ -11,6 +11,7 @@ from src.schemas.api_provider import (
 router = APIRouter(prefix="/api-provider", tags=["api-provider"])
 
 
+# TODO: Create permissions dependency for this endpoint to allow only admin users to add new API providers
 @router.post("", response_model=ApiProviderCreateResponse)
 async def create_api_provider(
     payload: ApiProviderCreate,
