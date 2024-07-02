@@ -45,12 +45,19 @@ class ApiProviderService(BaseService[ApiProviderRepository]):
                 Message can be customized, but defaults to the one in the schema.
         """
 
-        api_provider = self.repository.get_one_by_name(payload.lowercase_name)
+        # api_provider = self.repository.get_one_by_name(payload.lowercase_name)
+        api_provider = (
+            self.repository.get_one_with_selected_attributes_by_condition(
+                ["id"],
+                "lowercase_name",
+                payload.lowercase_name,
+            )
+        )
 
         if api_provider:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="API provider already exists.",
+                detail=f"API provider {payload.name} already exists. Name must be unique.",
             )
         self.repository.create(payload.model_dump())
 
