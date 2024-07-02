@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Security
 
 from src.services.auth import AuthService
 from src.services.user import UserService
@@ -15,5 +15,5 @@ ApiProviderServiceDependency = Annotated[
 ]
 
 AuthDependency = Annotated[
-    AuthCurrentUser, Depends(AuthService.get_current_user)
+    AuthCurrentUser, Security(AuthService.get_current_user)
 ]

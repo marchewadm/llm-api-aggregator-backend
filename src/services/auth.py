@@ -16,8 +16,10 @@ from src.schemas.auth import (
     AuthLoginResponse,
 )
 
+from .base import BaseService
 
-class AuthService:
+
+class AuthService(BaseService[UserRepository]):
     """
     Service for auth related operations.
     """
@@ -25,8 +27,7 @@ class AuthService:
     _oauth2_bearer = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
     def __init__(
-        self,
-        repository: UserRepository = Depends(UserRepository),
+        self, repository: UserRepository = Depends(UserRepository)
     ) -> None:
         """
         Initializes the service with the repository.
@@ -38,7 +39,7 @@ class AuthService:
             None
         """
 
-        self.repository = repository
+        super().__init__(repository)
 
     @staticmethod
     def _create_access_token(email: str, user_id: int) -> str:
@@ -99,7 +100,29 @@ class AuthService:
                 detail="Your session has expired. Please log in again.",
             )
 
-    def authenticate_user(
+    def create(self, payload: AuthRegister) -> AuthRegisterResponse:
+        """
+        Creates a user.
+
+        Args:
+            payload (AuthRegister): The user's email, name and password.
+
+        Returns:
+            AuthRegisterResponse: A message telling the user to check their email.
+            Message can be customized, but defaults to the one in the schema.
+        """
+
+        user = self.repository.get_one_with_selected_attributes_by_condition(
+            ["id"], "email", payload.email
+        )
+
+        if not user:
+            self.repository.create(
+                payload.model_dump(exclude={"password", "password_2"})
+            )
+        return AuthRegisterResponse()
+
+    def get_authenticated(
         self, payload: OAuth2PasswordRequestForm
     ) -> AuthLoginResponse:
         """
@@ -115,8 +138,8 @@ class AuthService:
             AuthLoginResponse: The access token and token type.
         """
 
-        user = self.repository.get_user_id_and_password_by_email(
-            payload.username
+        user = self.repository.get_one_with_selected_attributes_by_condition(
+            ["id", "password"], "email", payload.username
         )
 
         if not user or not hash_util.verify_hash(
@@ -129,21 +152,3 @@ class AuthService:
 
         token = self._create_access_token(payload.username, user.id)
         return AuthLoginResponse(access_token=token, token_type="bearer")
-
-    def create_user(self, payload: AuthRegister) -> AuthRegisterResponse:
-        """
-        Creates a user.
-
-        Args:
-            payload (AuthRegister): The user's email, name and password.
-
-        Returns:
-            AuthRegisterResponse: A message telling the user to check their email.
-            Message can be customized, but defaults to the one in the schema.
-        """
-
-        user = self.repository.get_user_id_by_email(payload.email)
-
-        if not user:
-            self.repository.create(payload)
-        return AuthRegisterResponse()

@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session, load_only
 class BaseRepository[T]:
     """
     Base repository for database related operations.
+
+    All repositories should inherit from this class.
     """
 
     def __init__(self, db: Session, model: type[T]) -> None:

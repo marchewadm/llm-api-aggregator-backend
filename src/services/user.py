@@ -8,8 +8,10 @@ from src.schemas.user import (
     UserUpdatePasswordResponse,
 )
 
+from .base import BaseService
 
-class UserService:
+
+class UserService(BaseService[UserRepository]):
     """
     Service for user related operations.
     """
@@ -27,23 +29,29 @@ class UserService:
             None
         """
 
-        self.repository = repository
+        super().__init__(repository)
 
-    def get_user_profile(self, user_id: int) -> UserProfileResponse:
+    def create(self, payload) -> None:
+        """
+        This method is implemented in AuthService, but not in UserService.
+        """
+
+        pass
+
+    def get_profile(self, user_id: int) -> UserProfileResponse:
         """
         Get a user's profile by ID.
 
         Args:
             user_id (int): The ID of the user to get.
 
-        Raises:
-            HTTPException: Raised with status code 404 if the user is not found.
-
         Returns:
             UserProfileResponse: The user's profile response containing the user's email, name, avatar and passphrase.
         """
 
-        user = self.repository.get_profile_by_id(user_id)
+        user = self.repository.get_one_with_selected_attributes_by_condition(
+            ["email", "name", "avatar", "passphrase"], "id", user_id
+        )
 
         if not user:
             raise HTTPException(
@@ -62,15 +70,18 @@ class UserService:
             payload (UserUpdatePassword): The payload containing the current and new password.
 
         Raises:
-            HTTPException: Raised with status code 404 if the user is not found.
             HTTPException: Raised with status code 400 if the current password is incorrect.
+            HTTPException: Raised with status code 404 if the user is not found.
 
         Returns:
             UserUpdatePasswordResponse: The response containing a message if the operation is successful.
             Message can be customized, but defaults to the one in the schema.
         """
 
-        user = self.repository.get_password_by_id(user_id)
+        # user = self.repository.get_password_by_id(user_id)
+        user = self.repository.get_one_with_selected_attributes_by_condition(
+            ["password"], "id", user_id
+        )
 
         if not user:
             raise HTTPException(

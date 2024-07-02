@@ -12,7 +12,7 @@ async def get_user_profile(
     auth: AuthDependency,
     user_service: UserServiceDependency,
 ):
-    return user_service.get_user_profile(auth.user_id)
+    return user_service.get_profile(auth.user_id)
 
 
 @router.patch("/update-password")
