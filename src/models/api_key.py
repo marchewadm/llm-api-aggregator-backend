@@ -1,9 +1,16 @@
 import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, UniqueConstraint, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.core import Base
+
+# Due to circular import error we need to use TYPE_CHECKING to avoid it.
+# More info at: https://github.com/sqlalchemy/sqlalchemy/discussions/9576#discussioncomment-5510161
+if TYPE_CHECKING:
+    from .user import User
+    from .api_provider import ApiProvider
 
 
 class ApiKey(Base):
@@ -21,4 +28,5 @@ class ApiKey(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    user = relationship("User", back_populates="api_keys")
+    user: Mapped["User"] = relationship(back_populates="api_keys")
+    api_provider: Mapped["ApiProvider"] = relationship()

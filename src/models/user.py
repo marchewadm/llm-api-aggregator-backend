@@ -1,12 +1,15 @@
 import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from sqlalchemy import String, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.core import Base
 
-from .api_key import ApiKey
+# Due to circular import error we need to use TYPE_CHECKING to avoid it.
+# More info at: https://github.com/sqlalchemy/sqlalchemy/discussions/9576#discussioncomment-5510161
+if TYPE_CHECKING:
+    from .api_key import ApiKey
 
 
 class User(Base):
@@ -28,4 +31,4 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    api_keys = relationship("ApiKey", back_populates="user")
+    api_keys: Mapped["ApiKey"] = relationship(back_populates="user")
