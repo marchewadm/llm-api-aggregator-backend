@@ -4,6 +4,7 @@ from src.dependencies import ApiProviderServiceDependency
 from src.schemas.api_provider import (
     ApiProviderCreate,
     ApiProviderCreateResponse,
+    ApiProviderResponse,
     ApiProvidersResponse,
 )
 
@@ -17,9 +18,26 @@ async def create_api_provider(
     payload: ApiProviderCreate,
     api_provider_service: ApiProviderServiceDependency,
 ):
-    return api_provider_service.create_api_provider(payload)
+    return api_provider_service.create(payload)
 
 
-@router.get("", response_model=ApiProvidersResponse)
-async def get_api_providers(api_provider_service: ApiProviderServiceDependency):
-    return api_provider_service.get_api_providers()
+@router.get("/{api_provider_id}", response_model=ApiProviderResponse)
+async def get_api_provider_by_id(
+    api_provider_id: int, api_provider_service: ApiProviderServiceDependency
+):
+    return api_provider_service.get_one_by_id(api_provider_id)
+
+
+@router.get("/all", response_model=ApiProvidersResponse)
+async def get_api_providers_names(
+    api_provider_service: ApiProviderServiceDependency,
+):
+    return api_provider_service.get_all()
+
+
+# TODO: Create permissions dependency for this endpoint to allow only admin users to delete API providers
+@router.delete("/{api_provider_id}")
+async def delete_api_provider(
+    api_provider_id: int, api_provider_service: ApiProviderServiceDependency
+):
+    return api_provider_service.delete_by_id(api_provider_id)

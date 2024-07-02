@@ -7,17 +7,19 @@ from src.schemas.api_provider import (
     ApiProvidersResponse,
 )
 
+from .base import BaseService
 
-class ApiProviderService:
+
+class ApiProviderService(BaseService[ApiProviderRepository]):
     """
     Service for API provider related operations.
     """
 
     def __init__(
         self, repository: ApiProviderRepository = Depends(ApiProviderRepository)
-    ) -> None:
+    ):
         """
-        Initializes the service with the repository.
+        Initialize the service with the repository.
 
         Args:
             repository (ApiProviderRepository): The repository to use for API provider operations.
@@ -26,37 +28,35 @@ class ApiProviderService:
             None
         """
 
-        self.repository = repository
+        super().__init__(repository)
 
-    def create_api_provider(
-        self, payload: ApiProviderCreate
-    ) -> ApiProviderCreateResponse:
+    def create(self, payload: ApiProviderCreate) -> ApiProviderCreateResponse:
         """
-        Create a new API provider in the database.
+        Create new API provider and store it in the database.
 
         Args:
-            payload (ApiProviderCreate): API provider creation payload containing name of the provider.
+            payload (ApiProviderCreate): Pydantic model containing the data to create the entity with.
 
         Raises:
             HTTPException: Raised with status code 409 if the API provider already exists.
 
         Returns:
             ApiProviderCreateResponse: A message informing that the API provider was created.
-            Message can be customized, but defaults to the one in the schema.
+                Message can be customized, but defaults to the one in the schema.
         """
 
-        api_provider = self.repository.get_one(payload.lowercase_name)
+        api_provider = self.repository.get_one_by_name(payload.lowercase_name)
 
         if api_provider:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="API provider already exists.",
             )
-        self.repository.create(payload)
+        self.repository.create(payload.model_dump())
 
         return ApiProviderCreateResponse()
 
-    def get_api_providers(self) -> ApiProvidersResponse:
+    def get_all(self) -> ApiProvidersResponse:
         """
         Get all API providers.
 
@@ -64,4 +64,4 @@ class ApiProviderService:
             ApiProvidersResponse: A list of all available API providers.
         """
 
-        return ApiProvidersResponse(api_providers=self.repository.get_many())
+        return ApiProvidersResponse(api_providers=self.repository.get_all())

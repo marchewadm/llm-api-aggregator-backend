@@ -6,6 +6,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.core import Base
 
+from .api_key import ApiKey
+
 
 class User(Base):
     __tablename__ = "users"

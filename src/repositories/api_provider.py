@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, load_only
 
@@ -6,15 +8,16 @@ from fastapi import Depends
 from src.database.core import get_db
 
 from src.models.api_provider import ApiProvider
-from src.schemas.api_provider import ApiProviderCreate
+
+from .base import BaseRepository
 
 
-class ApiProviderRepository:
+class ApiProviderRepository(BaseRepository[ApiProvider]):
     """
     Repository for api provider database related operations.
     """
 
-    def __init__(self, db: Session = Depends(get_db)) -> None:
+    def __init__(self, db: Session = Depends(get_db)):
         """
         Initialize the repository with a database session.
 
@@ -25,30 +28,9 @@ class ApiProviderRepository:
             None
         """
 
-        self.db = db
-        self.model = ApiProvider
+        super().__init__(db, ApiProvider)
 
-    def create(self, payload: ApiProviderCreate) -> None:
-        """
-        Create a new API provider in the database.
-
-        Args:
-            payload (ApiProviderCreate): API provider creation payload containing name of the provider.
-
-        Returns:
-            None
-        """
-
-        self.db.add(
-            ApiProvider(
-                name=payload.name,
-                lowercase_name=payload.lowercase_name,
-            )
-        )
-        self.db.commit()
-        return
-
-    def get_one(self, lowercase_name: str):
+    def get_one_by_name(self, lowercase_name: str) -> ApiProvider | None:
         """
         Get the API provider by name.
 
@@ -56,7 +38,7 @@ class ApiProviderRepository:
             lowercase_name (str): The name of the provider in lowercase.
 
         Returns:
-            ApiProvider: The API provider object containing the name of the provider.
+            ApiProvider | None: The API provider object if found, None otherwise.
         """
 
         return self.db.scalar(
@@ -65,12 +47,12 @@ class ApiProviderRepository:
             .where(self.model.lowercase_name == lowercase_name)
         )
 
-    def get_many(self):
+    def get_all(self) -> Sequence[ApiProvider]:
         """
         Get all API providers.
 
         Returns:
-            pass
+            Sequence[ApiProvider]: A sequence of API provider objects containing the name of the provider.
         """
 
         return self.db.scalars(
