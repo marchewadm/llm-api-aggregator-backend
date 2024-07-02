@@ -117,9 +117,7 @@ class AuthService(BaseService[UserRepository]):
         )
 
         if not user:
-            self.repository.create(
-                payload.model_dump(exclude={"password", "password_2"})
-            )
+            self.repository.create(payload.model_dump(exclude={"password_2"}))
         return AuthRegisterResponse()
 
     def get_authenticated(

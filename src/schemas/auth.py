@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Self
 
 from pydantic import (
     BaseModel,
@@ -7,7 +7,7 @@ from pydantic import (
     Field,
     ValidationInfo,
     field_validator,
-    computed_field,
+    model_validator,
 )
 
 from src.utils.hash import hash_util
@@ -37,10 +37,10 @@ class AuthRegister(BaseModel):
             raise ValueError("Passwords do not match")
         return value
 
-    @computed_field
-    @property
-    def hashed_password(self) -> str:
-        return hash_util.create_hash(self.password.get_secret_value())
+    @model_validator(mode="after")
+    def hash_password(self) -> Self:
+        self.password = hash_util.create_hash(self.password.get_secret_value())
+        return self
 
 
 class AuthCurrentUser(BaseModel):
