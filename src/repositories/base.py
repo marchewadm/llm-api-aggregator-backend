@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session, load_only
 
 
 class BaseRepository[T]:
@@ -46,6 +47,35 @@ class BaseRepository[T]:
         """
 
         return self.db.get_one(self.model, entity_id)
+
+    def get_one_with_selected_attributes_by_condition(
+        self,
+        attributes_to_fetch: list[str],
+        filter_attribute: str,
+        filter_value: str | int,
+    ) -> T:
+        """
+        Get selected attributes of an entity from the database based on a specific condition.
+
+        Args:
+            attributes_to_fetch (list[str]): The attributes to retrieve from the entity.
+            filter_attribute (str): The attribute to use for filtering.
+            filter_value (str | int): The value to compare the filter attribute against.
+
+        Returns:
+            T: The entity retrieved from the database.
+        """
+
+        selected_attributes = [
+            getattr(self.model, attr) for attr in attributes_to_fetch
+        ]
+        filter_column = getattr(self.model, filter_attribute)
+
+        return self.db.scalar(
+            select(self.model)
+            .options(load_only(*selected_attributes, raiseload=True))
+            .where(filter_column == filter_value)
+        )
 
     def delete_by_id(self, entity_id: int) -> None:
         """
