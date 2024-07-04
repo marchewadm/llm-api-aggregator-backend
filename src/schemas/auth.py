@@ -48,6 +48,10 @@ class AuthCurrentUser(BaseModel):
     user_id: int
 
 
+class AuthPassphrase(BaseModel):
+    passphrase: SecretStr
+
+
 class AuthLoginResponse(BaseModel):
     access_token: str
     token_type: str

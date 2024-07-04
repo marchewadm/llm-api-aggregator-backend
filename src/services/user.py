@@ -91,7 +91,6 @@ class UserService(BaseService[UserRepository]):
                 Message can be customized, but defaults to the one in the schema.
         """
 
-        # user = self.repository.get_password_by_id(user_id)
         user = self.repository.get_one_with_selected_attributes_by_condition(
             ["password"], "id", user_id
         )

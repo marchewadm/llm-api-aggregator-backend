@@ -1,3 +1,5 @@
+from cryptography.fernet import Fernet
+
 from fastapi import Depends
 
 from src.repositories.api_key import ApiKeyRepository
@@ -33,12 +35,15 @@ class ApiKeyService(BaseService[ApiKeyRepository]):
 
         pass
 
-    def get_user_api_keys(self, user_id: int) -> ApiKeysResponse:
+    def get_user_api_keys(
+        self, user_id: int, fernet_key: Fernet
+    ) -> ApiKeysResponse:
         """
-        Get all user's API keys by user ID.
+        Get all user's API keys by user ID and decrypt them using the user's Fernet key.
 
         Args:
             user_id (int): The user's ID.
+            fernet_key (bytes): The user's Fernet key.
 
         Returns:
             ApiKeysResponse: The API keys response containing the user's API keys.
@@ -49,7 +54,7 @@ class ApiKeyService(BaseService[ApiKeyRepository]):
         if api_keys:
             api_keys = [
                 ApiKey(
-                    key=api_key.key,
+                    key=fernet_key.decrypt(api_key.key).decode(),
                     api_provider_name=api_key.api_provider.name,
                     api_provider_lowercase_name=api_key.api_provider.lowercase_name,
                 )

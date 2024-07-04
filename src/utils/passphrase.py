@@ -4,6 +4,7 @@ import string
 import secrets
 import binascii
 
+from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -79,9 +80,9 @@ class PassphraseUtil:
         return salt
 
     @staticmethod
-    def generate_secure_key(passphrase: bytes, salt: bytes) -> bytes:
+    def generate_fernet_key(passphrase: bytes, salt: bytes) -> Fernet:
         """
-        Generates a secure key from a passphrase and salt.
+        Generates a Fernet key from a passphrase and salt.
 
         Args:
             passphrase (bytes): The passphrase to generate the key from.
@@ -96,7 +97,8 @@ class PassphraseUtil:
         )
         key = base64.urlsafe_b64encode(kdf.derive(passphrase))
 
-        return key
+        f_key = Fernet(key)
+        return f_key
 
 
 passphrase_util = PassphraseUtil()

@@ -7,6 +7,8 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 
 from src.utils.hash import hash_util
+from src.utils.passphrase import passphrase_util
+
 from src.config import settings
 from src.repositories.user import UserRepository
 from src.schemas.auth import (
@@ -150,3 +152,34 @@ class AuthService(BaseService[UserRepository]):
 
         token = self._create_access_token(payload.username, user.id)
         return AuthLoginResponse(access_token=token, token_type="bearer")
+
+    def get_fernet_key(self, user_id: int, passphrase: str) -> bytes:
+        """
+        Verify the user's passphrase and generate a Fernet key.
+
+        Args:
+            user_id (int): The user's ID.
+            passphrase (str): The user's passphrase.
+
+        Raises:
+            HTTPException: Raised with a 400 status code if the passphrase is incorrect.
+
+        Returns:
+            bytes: The Fernet key.
+        """
+
+        user = self.repository.get_one_with_selected_attributes_by_condition(
+            ["passphrase", "passphrase_salt"], "id", user_id
+        )
+
+        if not hash_util.verify_hash(passphrase, user.passphrase):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Please check your passphrase and try again.",
+            )
+
+        fernet_key = passphrase_util.generate_fernet_key(
+            passphrase.encode(),
+            passphrase_util.convert_hex_to_bytes(user.passphrase_salt),
+        )
+        return fernet_key

@@ -9,6 +9,7 @@ from src.services.api_key import ApiKeyService
 
 from src.schemas.auth import AuthCurrentUser
 
+
 AuthServiceDependency = Annotated[AuthService, Depends(AuthService)]
 UserServiceDependency = Annotated[UserService, Depends(UserService)]
 ApiProviderServiceDependency = Annotated[
