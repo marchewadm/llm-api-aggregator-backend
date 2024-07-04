@@ -7,6 +7,7 @@ from pydantic import (
     SecretStr,
     field_validator,
     ValidationInfo,
+    ConfigDict,
 )
 
 
@@ -47,6 +48,14 @@ class UserUpdatePassword(BaseModel):
         return value
 
 
+class UserUpdateProfile(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    avatar: Optional[str] = None
+    name: Optional[Annotated[str, Field(min_length=1, max_length=50)]] = None
+    email: Optional[EmailStr] = None
+
+
 class UserProfileResponse(UserBase):
     name: Annotated[str, Field(min_length=1, max_length=50)]
     avatar: Optional[str] = None
@@ -57,3 +66,10 @@ class UserUpdatePasswordResponse(BaseModel):
     message: str = (
         "Password updated successfully. Now you can log in with your new password."
     )
+
+
+class UserUpdateProfileResponse(BaseModel):
+    message: str
+    avatar: Optional[str] = None
+    name: Optional[Annotated[str, Field(min_length=1, max_length=50)]] = None
+    email: Optional[EmailStr] = None

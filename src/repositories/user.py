@@ -10,6 +10,7 @@ from src.models.user import User
 from .base import BaseRepository
 
 
+# TODO: Consider adding universal method for updating user's profile and password like "update_fields_by_id".
 class UserRepository(BaseRepository[User]):
     """
     Repository for user database related operations.
@@ -46,5 +47,22 @@ class UserRepository(BaseRepository[User]):
             update(self.model)
             .where(self.model.id == user_id)
             .values({self.model.password: hashed_new_password})
+        )
+        self.db.commit()
+
+    def update_profile_by_id(self, user_id: int, payload: dict) -> None:
+        """
+        Update the user's profile by user id.
+
+        Args:
+            user_id (int): User id.
+            payload (dict): The payload containing the optional fields to update such as name, email, avatar's URL.
+
+        Returns:
+            None
+        """
+
+        self.db.execute(
+            update(self.model).where(self.model.id == user_id).values(payload)
         )
         self.db.commit()
