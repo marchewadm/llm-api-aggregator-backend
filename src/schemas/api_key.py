@@ -1,10 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel, SecretStr, ConfigDict
+from pydantic import BaseModel
 
 
 class ApiKey(BaseModel):
-    key: SecretStr
+    key: str
     api_provider_name: str
     api_provider_lowercase_name: str
 

@@ -57,3 +57,16 @@ class ApiKeyService(BaseService[ApiKeyRepository]):
             ]
 
         return ApiKeysResponse(api_keys=api_keys)
+
+    def delete_user_api_keys(self, user_id: int) -> None:
+        """
+        Delete all API keys associated with the user by their ID.
+
+        Args:
+            user_id (int): The user's ID.
+
+        Returns:
+            None
+        """
+
+        self.repository.delete_all_by_user_id(user_id)

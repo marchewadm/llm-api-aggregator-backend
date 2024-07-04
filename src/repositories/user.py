@@ -66,3 +66,20 @@ class UserRepository(BaseRepository[User]):
             update(self.model).where(self.model.id == user_id).values(payload)
         )
         self.db.commit()
+
+    def update_passphrase_by_id(self, user_id: int, payload: dict) -> None:
+        """
+        Update the user's passphrase and salt by user id.
+
+        Args:
+            user_id (int): User id.
+            payload (dict): The payload containing the salt and hashed passphrase.
+
+        Returns:
+            None
+        """
+
+        self.db.execute(
+            update(self.model).where(self.model.id == user_id).values(payload)
+        )
+        self.db.commit()

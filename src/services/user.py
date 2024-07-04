@@ -3,13 +3,17 @@ from sqlalchemy.exc import IntegrityError
 from fastapi import Depends, HTTPException, status
 
 from src.utils.hash import hash_util
+from src.utils.passphrase import passphrase_util
+
 from src.repositories.user import UserRepository
+
 from src.schemas.user import (
     UserUpdatePassword,
     UserUpdateProfile,
     UserProfileResponse,
     UserUpdatePasswordResponse,
     UserUpdateProfileResponse,
+    UserUpdatePassphraseResponse,
 )
 
 from .base import BaseService
@@ -170,3 +174,32 @@ class UserService(BaseService[UserRepository]):
                 {"message": "Your profile is up to date. No changes were made."}
             )
         return UserUpdateProfileResponse(**updated_fields)
+
+    def update_user_passphrase(
+        self, user_id: int
+    ) -> UserUpdatePassphraseResponse:
+        """
+        Create a new passphrase and return it for the user.
+        The passphrase is hashed and stored in the database with a salt. It can be used later for creating fernet keys.
+
+        Args:
+            user_id (int): The ID of the user to update.
+
+        Returns:
+            UserUpdatePassphraseResponse: The response containing the new passphrase.
+        """
+
+        passphrase = passphrase_util.generate_strong_passphrase()
+        passphrase_salt = passphrase_util.convert_bytes_to_hex(
+            passphrase_util.generate_salt()
+        )
+        hashed_passphrase = hash_util.create_hash(passphrase)
+
+        self.repository.update_passphrase_by_id(
+            user_id,
+            {
+                "passphrase": hashed_passphrase,
+                "passphrase_salt": passphrase_salt,
+            },
+        )
+        return UserUpdatePassphraseResponse(passphrase=passphrase)

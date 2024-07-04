@@ -1,12 +1,17 @@
 from fastapi import APIRouter
 
-from src.dependencies import AuthDependency, UserServiceDependency
+from src.dependencies import (
+    AuthDependency,
+    UserServiceDependency,
+    ApiKeyServiceDependency,
+)
 from src.schemas.user import (
     UserUpdatePassword,
     UserUpdateProfile,
     UserProfileResponse,
     UserUpdatePasswordResponse,
     UserUpdateProfileResponse,
+    UserUpdatePassphraseResponse,
 )
 
 
@@ -49,3 +54,19 @@ async def update_user_profile(
     """
 
     return user_service.update_user_profile(auth.user_id, payload)
+
+
+@router.patch("/update-passphrase", response_model=UserUpdatePassphraseResponse)
+async def update_user_passphrase(
+    auth: AuthDependency,
+    user_service: UserServiceDependency,
+    api_key_service: ApiKeyServiceDependency,
+):
+    """
+    Update the user's passphrase by user ID, delete all API keys associated with the user and return a strong, random
+    generated passphrase for the user so that they can save it in a secure place.
+    """
+
+    passphrase = user_service.update_user_passphrase(auth.user_id)
+    api_key_service.delete_user_api_keys(auth.user_id)
+    return passphrase

@@ -73,3 +73,7 @@ class UserUpdateProfileResponse(BaseModel):
     avatar: Optional[str] = None
     name: Optional[Annotated[str, Field(min_length=1, max_length=50)]] = None
     email: Optional[EmailStr] = None
+
+
+class UserUpdatePassphraseResponse(BaseModel):
+    passphrase: str

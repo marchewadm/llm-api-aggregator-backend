@@ -68,6 +68,9 @@ class PassphraseUtil:
         """
         Generates a random salt.
 
+        Args:
+            size (int): The size of the salt. Defaults to 16.
+
         Returns:
             bytes: The generated salt.
         """
@@ -94,3 +97,6 @@ class PassphraseUtil:
         key = base64.urlsafe_b64encode(kdf.derive(passphrase))
 
         return key
+
+
+passphrase_util = PassphraseUtil()
