@@ -50,7 +50,7 @@ class UserUpdatePassword(BaseModel):
 class UserProfileResponse(UserBase):
     name: Annotated[str, Field(min_length=1, max_length=50)]
     avatar: Optional[str] = None
-    passphrase: Optional[SecretStr] = None
+    is_passphrase: Annotated[bool, Field(serialization_alias="isPassphrase")]
 
 
 class UserUpdatePasswordResponse(BaseModel):

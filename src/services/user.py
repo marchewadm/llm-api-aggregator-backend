@@ -57,7 +57,12 @@ class UserService(BaseService[UserRepository]):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
             )
-        return UserProfileResponse(**user.__dict__)
+        return UserProfileResponse(
+            email=user.email,
+            name=user.name,
+            avatar=user.avatar,
+            is_passphrase=True if user.passphrase else False,
+        )
 
     def update_user_password(
         self, user_id: int, payload: UserUpdatePassword
