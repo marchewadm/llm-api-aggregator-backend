@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, ConfigDict, computed_field, PastDatetime
 class ApiProvider(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    id: int
     name: Annotated[str, Field(min_length=1, max_length=50)]
 
 

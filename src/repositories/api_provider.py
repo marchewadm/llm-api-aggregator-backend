@@ -39,5 +39,7 @@ class ApiProviderRepository(BaseRepository[ApiProvider]):
         """
 
         return self.db.scalars(
-            select(self.model).options(load_only(self.model.name))
+            select(self.model).options(
+                load_only(self.model.name, self.model.id)
+            )
         ).all()
