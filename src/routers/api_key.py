@@ -52,8 +52,8 @@ async def update_api_keys(
         auth.user_id, payload.passphrase.get_secret_value()
     )
 
-    api_providers = api_provider_service.get_all()
+    db_all_api_providers = api_provider_service.get_all()
 
     return api_key_service.update_user_api_keys(
-        auth.user_id, fernet_key, payload, api_providers
+        auth.user_id, fernet_key, db_all_api_providers, payload
     )
