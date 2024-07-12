@@ -1,10 +1,15 @@
-# chattyAI
+# chattyAI (WIP)
 
-Chatty AI is a tool that allows you to store your chats from various LLMs in one place. Its backend is built on FastAPI, SQLAlchemy for communicating with a PostgreSQL database, and Pydantic for creating schemas.
+Chatty AI is a tool that allows you to store your chats from various LLMs in one place, making it easier to manage them.
+Its backend is built on FastAPI, SQLAlchemy for communicating with a PostgreSQL database, and Pydantic for creating schemas.
+
+## Supported APIs
+
+Currently, the project is in the integration phase with OpenAI's API.
 
 ## Prerequisites
 
-- Python 3.10 or higher
+- Python 3.12 or higher
 - PostgreSQL 15.6 or higher
 
 ## Installation
@@ -35,7 +40,7 @@ python -m venv venv
 ./venv/Scripts/Activate.ps1
 ```
 
-- For Linux:
+- For GNU/Linux and macOS by using bash shell:
 
 ```bash
 source venv/bin/activate
@@ -56,15 +61,16 @@ Then, create a new database. You can call it whatever you wish, it doesn't reall
 The `.env` file should look like this:
 
 ```
-DB_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE
-JWT_SECRET_KEY=YOUR_SECRET_KEY
+DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE
 ALLOWED_ORIGIN=YOUR_API_CONSUMER
+JWT_AUTH_SECRET_KEY=YOUR_GENERATED_AUTH_SECRET_KEY
 ```
 
-NOTE:
+#### NOTE:
 - Remember to adjust DB_URL according to your database username and password. If the project is running locally, you should set the host and port as `localhost:5432` (or `127.0.0.1:5432` if it doesn't work) since it is running on your local machine and `5432` is the default port for PostgreSQL.
 
-- You can generate the JWT_SECRET_KEY by executing this command in your console:
+
+- You can generate JWT_AUTH_SECRET_KEY by executing this command in your console:
   ```bash
   openssl rand -hex 32
   ```
