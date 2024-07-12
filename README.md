@@ -9,7 +9,7 @@ Currently, the project is in the integration phase with OpenAI's API.
 
 ## Prerequisites
 
-- Python 3.10 or higher
+- Python 3.12 or higher
 - PostgreSQL 15.6 or higher
 
 ## Installation
@@ -40,7 +40,7 @@ python -m venv venv
 ./venv/Scripts/Activate.ps1
 ```
 
-- For Linux:
+- For GNU/Linux and macOS by using bash shell:
 
 ```bash
 source venv/bin/activate
@@ -61,26 +61,21 @@ Then, create a new database. You can call it whatever you wish, it doesn't reall
 The `.env` file should look like this:
 
 ```
-DB_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE
+DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE
 ALLOWED_ORIGIN=YOUR_API_CONSUMER
-
 JWT_AUTH_SECRET_KEY=YOUR_GENERATED_AUTH_SECRET_KEY
-JWT_API_SECRET_KEY=YOUR_GENERATED_API_SECRET_KEY
 ```
 
 #### NOTE:
 - Remember to adjust DB_URL according to your database username and password. If the project is running locally, you should set the host and port as `localhost:5432` (or `127.0.0.1:5432` if it doesn't work) since it is running on your local machine and `5432` is the default port for PostgreSQL.
 
 
-- You can generate both the JWT_AUTH_SECRET_KEY and JWT_API_SECRET_KEY by executing this command in your console:
+- You can generate JWT_AUTH_SECRET_KEY by executing this command in your console:
   ```bash
   openssl rand -hex 32
   ```
 
 - The ALLOWED_ORIGIN variable should be set to the address of the API consumer. If you are running the frontend locally, you should set it to `http://localhost:5173` as it is the default address for the frontend running on Vite.
-
-#### SECURITY WARNING:
-- To enhance security, you should generate a separate key for the JWT_AUTH_SECRET_KEY and JWT_API_SECRET_KEY. This way, if one of the keys gets compromised, the other one will still be safe.
 
 After creating the `.env` file, you should run the following command to create the database tables:
 
