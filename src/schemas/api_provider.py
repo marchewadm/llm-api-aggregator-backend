@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Annotated
 
 from pydantic import BaseModel, Field, ConfigDict, computed_field, PastDatetime
@@ -11,8 +10,10 @@ class ApiProvider(BaseModel):
     name: Annotated[str, Field(min_length=1, max_length=50)]
 
 
-class ApiProviderCreate(ApiProvider):
+class ApiProviderCreate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: Annotated[str, Field(min_length=1, max_length=50)]
 
     @computed_field
     @property

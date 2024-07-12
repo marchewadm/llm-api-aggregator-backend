@@ -63,6 +63,7 @@ class ApiKeyService(BaseService[ApiKeyRepository]):
         if api_keys:
             api_keys = [
                 ApiKey(
+                    id=api_key.id,
                     key=fernet_key.decrypt(
                         passphrase_util.convert_hex_to_bytes(api_key.key)
                     ),
@@ -83,7 +84,7 @@ class ApiKeyService(BaseService[ApiKeyRepository]):
         payload: ApiKeysUpdate,
     ) -> tuple[list[dict], list[dict], list[dict]]:
         """
-        Set the operation to be performed on the user's API keys.
+        Helper method to set the API key CRUD operation based on the payload.
 
         Args:
             user_id (int): The user's ID.
@@ -92,7 +93,7 @@ class ApiKeyService(BaseService[ApiKeyRepository]):
             payload (ApiKeysUpdate): The API keys update payload.
 
         Returns:
-            tuple[list[dict], list[dict], list[dict]]: The API keys to create, update and delete.
+            tuple[list[dict], list[dict], list[dict]]: A tuple containing the API keys to create, update and delete.
         """
 
         db_api_keys = self.get_user_api_keys(user_id, fernet_key)
@@ -101,59 +102,57 @@ class ApiKeyService(BaseService[ApiKeyRepository]):
         api_keys_to_update: list[dict] = []
         api_keys_to_delete: list[dict] = []
 
-        for db_api_key in db_api_keys.api_keys:
-            is_api_key_set_to_delete = any(
-                db_api_key.api_provider_id != api_key.api_provider_id
-                for api_key in payload.api_keys
+        payload_provider_ids: set[int] = {
+            api_key.api_provider_id for api_key in payload.api_keys
+        }
+        db_provider_ids: set[int] = {
+            provider.id for provider in db_all_api_providers.api_providers
+        }
+        invalid_provider_ids: set[int] = payload_provider_ids - db_provider_ids
+
+        if invalid_provider_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid API provider ID(s): {', '.join(map(str, invalid_provider_ids))}",
             )
 
-            if is_api_key_set_to_delete:
-                api_keys_to_delete.append(
-                    {"api_provider_id": db_api_key.api_provider_id}
-                )
+        api_keys_to_delete = [
+            {"id": db_api_key.id}
+            for db_api_key in db_api_keys.api_keys
+            if db_api_key.api_provider_id not in payload_provider_ids
+        ]
 
         for api_key in payload.api_keys:
-            is_api_provider_id_valid = any(
-                db_api_provider.id == api_key.api_provider_id
-                for db_api_provider in db_all_api_providers.api_providers
+            encrypted_key = passphrase_util.convert_bytes_to_hex(
+                fernet_key.encrypt(api_key.key.encode())
             )
 
-            if not is_api_provider_id_valid:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid API provider ID.",
-                )
-
-            is_api_key_set_to_create = any(
-                db_api_key.api_provider_id != api_key.api_provider_id
-                and db_api_key.key != api_key.key
-                for db_api_key in db_api_keys.api_keys
-            )
-            is_api_key_set_to_update = any(
-                db_api_key.api_provider_id == api_key.api_provider_id
-                and db_api_key.key != api_key.key
-                for db_api_key in db_api_keys.api_keys
+            existing_key = next(
+                (
+                    db_api_key
+                    for db_api_key in db_api_keys.api_keys
+                    if db_api_key.api_provider_id == api_key.api_provider_id
+                ),
+                None,
             )
 
-            if is_api_key_set_to_create:
+            if existing_key:
+                if existing_key.key != api_key.key:
+                    api_keys_to_update.append(
+                        {
+                            "id": existing_key.id,
+                            "key": encrypted_key,
+                        }
+                    )
+            else:
                 api_keys_to_create.append(
                     {
-                        "key": passphrase_util.convert_bytes_to_hex(
-                            fernet_key.encrypt(api_key.key.encode())
-                        ),
+                        "key": encrypted_key,
                         "user_id": user_id,
                         "api_provider_id": api_key.api_provider_id,
                     }
                 )
-            elif is_api_key_set_to_update:
-                api_keys_to_update.append(
-                    {
-                        "key": passphrase_util.convert_bytes_to_hex(
-                            fernet_key.encrypt(api_key.key.encode())
-                        ),
-                        "api_provider_id": api_key.api_provider_id,
-                    }
-                )
+
         return api_keys_to_create, api_keys_to_update, api_keys_to_delete
 
     def update_user_api_keys(
@@ -186,9 +185,7 @@ class ApiKeyService(BaseService[ApiKeyRepository]):
             if api_keys_to_create:
                 self.repository.create_bulk(api_keys_to_create)
             if api_keys_to_update:
-                self.repository.update_bulk_by_user_id(
-                    user_id, api_keys_to_update
-                )
+                self.repository.update_bulk(api_keys_to_update)
             if api_keys_to_delete:
                 self.repository.delete_selected_by_user_id(
                     user_id, api_keys_to_delete

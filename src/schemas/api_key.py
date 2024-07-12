@@ -4,6 +4,7 @@ from pydantic import BaseModel, SecretStr, field_validator
 
 
 class ApiKey(BaseModel):
+    id: int
     key: str
     api_provider_id: Optional[int] = None
     api_provider_name: str

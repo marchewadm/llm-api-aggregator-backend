@@ -41,7 +41,7 @@ class ApiKeyRepository(BaseRepository[ApiKey]):
             None
         """
 
-        self.db.execute(insert(self.model).values(api_keys))
+        self.db.execute(insert(self.model), api_keys)
         self.db.commit()
 
     def get_all_by_user_id(self, user_id: int) -> Sequence[ApiKey]:
@@ -61,25 +61,18 @@ class ApiKeyRepository(BaseRepository[ApiKey]):
             .where(self.model.user_id == user_id)
         ).all()
 
-    def update_bulk_by_user_id(
-        self, user_id: int, api_keys: list[dict]
-    ) -> None:
+    def update_bulk(self, api_keys: list[dict]) -> None:
         """
-        Update multiple API keys in the database by user ID.
+        Update multiple API keys in the database.
 
         Args:
-            user_id (int): The user's ID.
             api_keys (list[dict]): A list of API key dictionaries.
 
         Returns:
             None
         """
 
-        self.db.connection().execute(
-            update(self.model)
-            .where(self.model.user_id == user_id)
-            .values(api_keys)
-        )
+        self.db.execute(update(self.model), api_keys)
         self.db.commit()
 
     def delete_selected_by_user_id(
@@ -96,10 +89,7 @@ class ApiKeyRepository(BaseRepository[ApiKey]):
             None
         """
 
-        conditions = [
-            self.model.api_provider_id == api_key["api_provider_id"]
-            for api_key in api_keys
-        ]
+        conditions = [self.model.id == api_key["id"] for api_key in api_keys]
 
         stmt = (
             delete(self.model)
