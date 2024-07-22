@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     """
 
     DATABASE_URL: str
+    REDIS_SERVER_HOST: str
+    REDIS_SERVER_PORT: int
     ALLOWED_ORIGIN: str
     JWT_AUTH_SECRET_KEY: str
     ALGORITHM: str = "HS256"

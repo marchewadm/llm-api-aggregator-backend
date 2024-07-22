@@ -1,7 +1,7 @@
 # chattyAI (WIP)
 
 Chatty AI is a tool that allows you to store your chats from various LLMs in one place, making it easier to manage them.
-Its backend is built on FastAPI, SQLAlchemy for communicating with a PostgreSQL database, and Pydantic for creating schemas.
+Its backend is built on FastAPI, SQLAlchemy for communicating with a PostgreSQL database along with Alembic for migrations, Redis for caching and Pydantic for performing data validation.
 
 ## Supported APIs
 
@@ -62,20 +62,23 @@ The `.env` file should look like this:
 
 ```
 DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE
+REDIS_SERVER_HOST=YOUR_REDIS_SERVER_URL
+REDIS_SERVER_PORT=YOUR_REDIS_SERVER_PORT
 ALLOWED_ORIGIN=YOUR_API_CONSUMER
 JWT_AUTH_SECRET_KEY=YOUR_GENERATED_AUTH_SECRET_KEY
 ```
 
 #### NOTE:
-- Remember to adjust DB_URL according to your database username and password. If the project is running locally, you should set the host and port as `localhost:5432` (or `127.0.0.1:5432` if it doesn't work) since it is running on your local machine and `5432` is the default port for PostgreSQL.
+- Remember to adjust DATABASE_URL according to your database username and password. If the project is running locally, you should set the host and port as `localhost:5432` (or `127.0.0.1:5432` if it doesn't work) since it is running on your local machine and `5432` is the default port for PostgreSQL.
 
+- The REDIS_SERVER_HOST and REDIS_SERVER_PORT variables should be set to the address and port of your Redis server. If you are running Redis locally, you should set it to `localhost` and `6379` respectively.
+
+- The ALLOWED_ORIGIN variable should be set to the address of the API consumer. If you are running the frontend locally, you should set it to `http://localhost:5173` as it is the default address for the frontend running on Vite.
 
 - You can generate JWT_AUTH_SECRET_KEY by executing this command in your console:
   ```bash
   openssl rand -hex 32
   ```
-
-- The ALLOWED_ORIGIN variable should be set to the address of the API consumer. If you are running the frontend locally, you should set it to `http://localhost:5173` as it is the default address for the frontend running on Vite.
 
 After creating the `.env` file, you should run the following command to create the database tables:
 
