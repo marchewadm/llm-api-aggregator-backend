@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from fastapi import Depends
 
-from src.database.core import get_db
+from src.core.database import get_db
 
 from src.models.user import User
 

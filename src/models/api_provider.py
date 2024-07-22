@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import String, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.database.core import Base
+from src.core.database import Base
 
 
 class ApiProvider(Base):

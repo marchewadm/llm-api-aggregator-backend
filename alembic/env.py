@@ -7,7 +7,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from src.database.core import Base
+from src.core.database import Base
 
 from src.models.user import User
 from src.models.api_provider import ApiProvider

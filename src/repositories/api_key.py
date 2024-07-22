@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from fastapi import Depends
 
-from src.database.core import get_db
+from src.core.database import get_db
 
 from src.models.api_key import ApiKey
 

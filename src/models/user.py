@@ -4,7 +4,7 @@ from typing import Optional, TYPE_CHECKING
 from sqlalchemy import String, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.database.core import Base
+from src.core.database import Base
 
 # Due to circular import error we need to use TYPE_CHECKING to avoid it.
 # More info at: https://github.com/sqlalchemy/sqlalchemy/discussions/9576#discussioncomment-5510161
