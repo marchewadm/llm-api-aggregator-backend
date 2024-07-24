@@ -66,6 +66,7 @@ REDIS_SERVER_HOST=YOUR_REDIS_SERVER_URL
 REDIS_SERVER_PORT=YOUR_REDIS_SERVER_PORT
 ALLOWED_ORIGIN=YOUR_API_CONSUMER
 JWT_AUTH_SECRET_KEY=YOUR_GENERATED_AUTH_SECRET_KEY
+FERNET_MASTER_KEY=YOUR_GENERATED_FERNET_MASTER_KEY
 ```
 
 #### NOTE:
@@ -79,6 +80,15 @@ JWT_AUTH_SECRET_KEY=YOUR_GENERATED_AUTH_SECRET_KEY
   ```bash
   openssl rand -hex 32
   ```
+
+- To generate FERNET_MASTER_KEY, you can use the following code snippet, e.g. in Python console:
+  ```bash
+  >>> from cryptography.fernet import Fernet
+  >>> key = Fernet.generate_key()
+  >>> key.decode()
+  'YwBQY5h4XpXiFsffgrq-RJmZerMmAvjHFVgY4e9hx48='
+  ```
+  Then you should copy the key as `YwBQY5h4XpXiFsffgrq-RJmZerMmAvjHFVgY4e9hx48=` (without the quotes) and paste it into the `.env` file.
 
 After creating the `.env` file, you should run the following command to create the database tables:
 

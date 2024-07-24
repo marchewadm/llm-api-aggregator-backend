@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     REDIS_SERVER_PORT: int
     ALLOWED_ORIGIN: str
     JWT_AUTH_SECRET_KEY: str
+    FERNET_MASTER_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_IN_MINUTES: int = 180
 
