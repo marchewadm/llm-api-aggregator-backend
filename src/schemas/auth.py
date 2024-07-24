@@ -44,7 +44,6 @@ class AuthRegister(BaseModel):
 
 
 class AuthCurrentUser(BaseModel):
-    email: EmailStr
     user_id: int
 
 

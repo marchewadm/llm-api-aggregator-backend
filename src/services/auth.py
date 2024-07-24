@@ -44,19 +44,18 @@ class AuthService(BaseService[UserRepository]):
         super().__init__(repository)
 
     @staticmethod
-    def _create_access_token(email: str, user_id: int) -> str:
+    def _create_access_token(user_id: int) -> str:
         """
         Creates an access token for a user.
 
         Args:
-            email (str): The user's email.
             user_id (int): The user's ID.
 
         Returns:
             str: The access token.
         """
 
-        encode = {"sub": email, "id": user_id}
+        encode = {"sub": user_id}
         expires = datetime.now(UTC) + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_IN_MINUTES
         )
@@ -87,15 +86,14 @@ class AuthService(BaseService[UserRepository]):
             payload = jwt.decode(
                 token, settings.JWT_AUTH_SECRET_KEY, settings.ALGORITHM
             )
-            email: str = payload.get("sub")
-            user_id: int = payload.get("id")
+            user_id: int = payload.get("sub")
 
-            if email is None or user_id is None:
+            if user_id is None:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Could not authenticate user.",
                 )
-            return AuthCurrentUser(email=email, user_id=user_id)
+            return AuthCurrentUser(user_id=user_id)
         except JWTError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -150,7 +148,7 @@ class AuthService(BaseService[UserRepository]):
                 detail="Your email or password is incorrect. Please try again.",
             )
 
-        token = self._create_access_token(payload.username, user.id)
+        token = self._create_access_token(user.id)
         return AuthLoginResponse(access_token=token, token_type="bearer")
 
     def get_fernet_key(self, user_id: int, passphrase: str) -> bytes:
