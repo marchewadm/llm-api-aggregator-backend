@@ -1,16 +1,13 @@
-from redis import Redis
+import redis.asyncio as redis
+from fastapi import Request
 
-from src.config import settings
 
-
-def get_redis() -> Redis:
+async def get_redis(request: Request) -> redis.Redis:
     """
     Get a Redis connection.
 
     Returns:
-        Redis: A Redis connection object.
+        Redis: The Redis connection.
     """
 
-    return Redis(
-        host=settings.REDIS_SERVER_HOST, port=settings.REDIS_SERVER_PORT
-    )
+    return request.app.state.redis_client
