@@ -9,8 +9,13 @@ Currently, the project is in the integration phase with OpenAI's API.
 
 ## Prerequisites
 
+The prerequisites for running the project are as follows:
+
 - Python 3.12 or higher
 - PostgreSQL 15.6 or higher
+- Redis 7.2.5 or higher
+
+Application is probably compatible with lower versions of PostgreSQL and Redis, but it has not been tested yet.
 
 ## Installation
 
@@ -54,7 +59,7 @@ pip install -r requirements/requirements.txt
 
 ## Before usage
 
-Before running the application, make sure that PostgreSQL is installed and running on your machine.
+Before running the application, make sure that PostgreSQL and Redis are installed and running on your machine.
 
 Then, create a new database. You can call it whatever you wish, it doesn't really matter. However, what really matters is creating a `.env` file in the root directory of the project, otherwise the server won't boot up.
 

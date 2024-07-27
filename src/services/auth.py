@@ -1,5 +1,7 @@
+import uuid
 from typing import Annotated
 from datetime import timedelta, datetime, UTC
+from cryptography.fernet import Fernet
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
@@ -55,7 +57,7 @@ class AuthService(BaseService[UserRepository]):
             str: The access token.
         """
 
-        encode = {"sub": user_id}
+        encode = {"sub": str(user_id), "uuid": str(uuid.uuid4())}
         expires = datetime.now(UTC) + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_IN_MINUTES
         )
@@ -86,14 +88,15 @@ class AuthService(BaseService[UserRepository]):
             payload = jwt.decode(
                 token, settings.JWT_AUTH_SECRET_KEY, settings.ALGORITHM
             )
-            user_id: int = payload.get("sub")
+            user_id: str = payload.get("sub")
+            redis_uuid: str = payload.get("uuid")
 
             if user_id is None:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Could not authenticate user.",
                 )
-            return AuthCurrentUser(user_id=user_id)
+            return AuthCurrentUser(user_id=int(user_id), uuid=redis_uuid)
         except JWTError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -151,7 +154,7 @@ class AuthService(BaseService[UserRepository]):
         token = self._create_access_token(user.id)
         return AuthLoginResponse(access_token=token, token_type="bearer")
 
-    def get_fernet_key(self, user_id: int, passphrase: str) -> bytes:
+    def get_fernet_key(self, user_id: int, passphrase: str) -> Fernet:
         """
         Verify the user's passphrase and generate a Fernet key.
 
@@ -163,7 +166,7 @@ class AuthService(BaseService[UserRepository]):
             HTTPException: Raised with a 400 status code if the passphrase is incorrect.
 
         Returns:
-            bytes: The Fernet key.
+            Fernet: The Fernet key.
         """
 
         user = self.repository.get_one_with_selected_attributes_by_condition(

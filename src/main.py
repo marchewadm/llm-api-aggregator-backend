@@ -26,7 +26,10 @@ async def lifespan(app: FastAPI):
     """
 
     redis_client = redis.Redis(
-        host=settings.REDIS_SERVER_HOST, port=settings.REDIS_SERVER_PORT, db=0
+        host=settings.REDIS_SERVER_HOST,
+        port=settings.REDIS_SERVER_PORT,
+        db=0,
+        decode_responses=True,
     )
     app.state.redis_client = redis_client
     yield

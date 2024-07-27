@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     FERNET_MASTER_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_IN_MINUTES: int = 180
+    REDIS_API_KEYS_EXPIRE_IN_SEC: int = 900
 
     model_config = SettingsConfigDict(
         case_sensitive=True,

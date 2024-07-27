@@ -192,11 +192,13 @@ class ApiKeyService(BaseService[ApiKeyRepository]):
                 )
 
             return ApiKeysUpdateResponse(
-                message="API keys updated successfully."
+                message="API keys updated successfully.",
+                is_updated=True,
             )
         else:
             return ApiKeysUpdateResponse(
-                message="Your API keys are already up to date. No changes were made."
+                message="Your API keys are already up to date. No changes were made.",
+                is_updated=False,
             )
 
     def delete_user_api_keys(self, user_id: int) -> None:

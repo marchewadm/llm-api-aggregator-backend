@@ -45,3 +45,4 @@ class ApiKeysResponse(BaseModel):
 
 class ApiKeysUpdateResponse(BaseModel):
     message: str
+    is_updated: bool

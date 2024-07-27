@@ -6,6 +6,7 @@ from src.services.auth import AuthService
 from src.services.user import UserService
 from src.services.api_provider import ApiProviderService
 from src.services.api_key import ApiKeyService
+from src.services.redis import RedisService
 
 from src.schemas.auth import AuthCurrentUser
 
@@ -16,6 +17,7 @@ ApiProviderServiceDependency = Annotated[
     ApiProviderService, Depends(ApiProviderService)
 ]
 ApiKeyServiceDependency = Annotated[ApiKeyService, Depends(ApiKeyService)]
+RedisServiceDependency = Annotated[RedisService, Depends(RedisService)]
 
 AuthDependency = Annotated[
     AuthCurrentUser, Security(AuthService.get_current_user)

@@ -45,6 +45,7 @@ class AuthRegister(BaseModel):
 
 class AuthCurrentUser(BaseModel):
     user_id: int
+    uuid: str
 
 
 class AuthLoginResponse(BaseModel):
