@@ -1,9 +1,13 @@
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
+
 from redis import asyncio as redis
+
+from cryptography.fernet import Fernet
 
 from src.core.redis import get_redis
 from src.schemas.api_key import ApiKeysResponse
 from src.config import settings
+from src.utils.passphrase import passphrase_util
 
 
 class RedisService:
@@ -17,6 +21,58 @@ class RedisService:
         """
 
         self.redis_client = redis_client
+
+    async def get_user_specific_api_key(
+        self, uuid: str, provider_name: str
+    ) -> str:
+        """
+        Retrieve a specific API key for a user based on the API provider name.
+
+        Args:
+            uuid (str): The user's UUID retrieved from user's JWT and stored in Redis.
+            provider_name (str): The name of the API provider (e.g., "openai").
+
+        Raises:
+            HTTPException: Raised with status code 401 if the user does not have any API keys stored in Redis.
+            HTTPException: Raised with status code 404 if the user does not have an API key for the specified provider.
+
+        Returns:
+            str: The decrypted API key if found.
+        """
+
+        user_api_keys_list = f"user:{uuid}:api_keys"
+
+        if not await self.redis_client.exists(user_api_keys_list):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Please provide a passphrase to continue.",
+            )
+
+        api_key_ids = await self.redis_client.smembers(user_api_keys_list)
+
+        for api_key_id in api_key_ids:
+            redis_key = f"user:{uuid}:{api_key_id}"
+            api_key_data = await self.redis_client.hgetall(redis_key)
+
+            if api_key_data:
+                if (
+                    api_key_data.get("api_provider_lowercase_name", "").lower()
+                    == provider_name.lower()
+                ):
+                    encrypted_key = api_key_data.get("key")
+
+                    if not encrypted_key:
+                        raise HTTPException(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail="API key not found.",
+                        )
+
+                    fernet_key = Fernet(settings.FERNET_MASTER_KEY)
+                    decrypted_key = fernet_key.decrypt(
+                        passphrase_util.convert_hex_to_bytes(encrypted_key)
+                    )
+
+                    return decrypted_key.decode()
 
     async def set_user_api_keys_in_cache(
         self, uuid: str, api_keys: ApiKeysResponse
@@ -60,9 +116,12 @@ class RedisService:
 
         for api_key in api_keys.api_keys:
             redis_key = f"user:{uuid}:api_key:{api_key.id}"
+            fernet_key = Fernet(settings.FERNET_MASTER_KEY)
 
             api_key_data = {
-                "key": api_key.key,
+                "key": passphrase_util.convert_bytes_to_hex(
+                    fernet_key.encrypt(api_key.key.encode())
+                ),
                 "api_provider_id": str(api_key.api_provider_id),
                 "api_provider_name": api_key.api_provider_name,
                 "api_provider_lowercase_name": api_key.api_provider_lowercase_name,
