@@ -22,7 +22,7 @@ class RedisService:
 
         self.redis_client = redis_client
 
-    async def get_user_specific_api_key(
+    async def get_user_specific_api_key_from_cache(
         self, uuid: str, provider_name: str
     ) -> str:
         """
@@ -76,7 +76,7 @@ class RedisService:
 
     async def set_user_api_keys_in_cache(
         self, uuid: str, api_keys: ApiKeysResponse
-    ):
+    ) -> None:
         """
         Set the user's API keys in Redis. The API keys are stored in a set with the user's UUID as the key.
 
@@ -138,4 +138,31 @@ class RedisService:
         await pipeline.expire(
             user_api_keys_list, settings.REDIS_API_KEYS_EXPIRE_IN_SEC
         )
+        await pipeline.execute()
+
+    async def delete_user_api_keys_from_cache(self, uuid: str) -> None:
+        """
+        Delete the user's API keys from Redis.
+
+        Args:
+            uuid (str): The user's UUID retrieved from user's JWT and stored in Redis.
+
+        Returns:
+            None
+        """
+
+        user_api_keys_list = f"user:{uuid}:api_keys"
+
+        if not await self.redis_client.exists(user_api_keys_list):
+            return
+
+        pipeline = self.redis_client.pipeline()
+        api_key_ids = await self.redis_client.smembers(user_api_keys_list)
+
+        for api_key_id in api_key_ids:
+            redis_key = f"user:{uuid}:{api_key_id}"
+            await pipeline.delete(redis_key)
+
+        await pipeline.delete(user_api_keys_list)
+
         await pipeline.execute()

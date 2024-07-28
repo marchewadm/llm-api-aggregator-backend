@@ -42,7 +42,7 @@ class BaseService(ABC):
             str: The decrypted API key if found.
         """
 
-        api_key = await redis_service.get_user_specific_api_key(
+        api_key = await redis_service.get_user_specific_api_key_from_cache(
             auth.uuid, cls._get_api_provider_name()
         )
 

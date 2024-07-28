@@ -4,6 +4,7 @@ from src.dependencies import (
     AuthDependency,
     UserServiceDependency,
     ApiKeyServiceDependency,
+    RedisServiceDependency,
 )
 from src.schemas.user import (
     UserUpdatePassword,
@@ -61,6 +62,7 @@ async def update_user_passphrase(
     auth: AuthDependency,
     user_service: UserServiceDependency,
     api_key_service: ApiKeyServiceDependency,
+    redis_service: RedisServiceDependency,
 ):
     """
     Update the user's passphrase by user ID, delete all API keys associated with the user and return a strong, random
@@ -68,5 +70,8 @@ async def update_user_passphrase(
     """
 
     passphrase = user_service.update_user_passphrase(auth.user_id)
+
     api_key_service.delete_user_api_keys(auth.user_id)
+    await redis_service.delete_user_api_keys_from_cache(auth.uuid)
+
     return passphrase
