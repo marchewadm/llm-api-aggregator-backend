@@ -5,12 +5,13 @@ from src.clients.external_dependencies import (
     OpenAiServiceDependency,
     OpenAiApiKeyDependency,
 )
+from src.clients.schemas.common import AiModelsResponse
 
 
 router = APIRouter(prefix="/openai", tags=["openai"])
 
 
-@router.get("/models")
+@router.get("/models", response_model=AiModelsResponse)
 async def get_openai_models(
     auth: AuthDependency,
     api_key: OpenAiApiKeyDependency,
@@ -20,4 +21,4 @@ async def get_openai_models(
     Get the available OpenAI models.
     """
 
-    return await openai_service.get_ai_models()
+    return openai_service.get_ai_models()

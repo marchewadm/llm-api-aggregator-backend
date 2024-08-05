@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from src.dependencies import AuthDependency, RedisServiceDependency
+from src.clients.schemas.common import AiModelsResponse
 
 
 class BaseService(ABC):
@@ -62,12 +63,12 @@ class BaseService(ABC):
 
         return api_key
 
-    def get_ai_models(self) -> list[str]:
+    def get_ai_models(self) -> AiModelsResponse:
         """
         Get all available Large Language Models (LLMs) for the user.
 
         Returns:
-            list[str]: The available LLMs.
+            AiModelsResponse: The response containing the list of all available LLMs.
         """
 
-        return self.ai_models
+        return AiModelsResponse(ai_models=self.ai_models)
