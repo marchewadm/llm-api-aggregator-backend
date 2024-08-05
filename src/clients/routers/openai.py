@@ -20,4 +20,4 @@ async def get_openai_models(
     Get the available OpenAI models.
     """
 
-    return await openai_service.get_models(api_key)
+    return await openai_service.get_ai_models()

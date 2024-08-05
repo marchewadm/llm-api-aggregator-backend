@@ -5,13 +5,24 @@ from src.dependencies import AuthDependency, RedisServiceDependency
 
 class BaseService(ABC):
     """
-    Base class for external APIs services.
+    Base abstract class for external APIs services.
+
+    All services should inherit from this class.
+    Contains some already implemented methods that can be used by child classes.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, ai_models: list[str]) -> None:
         """
         Initializes the service.
+
+        Args:
+            ai_models (list[str]): List of all supported Large Language Models (LLMs).
+
+        Returns:
+            None
         """
+
+        self.ai_models = ai_models
 
     @classmethod
     @abstractmethod
@@ -50,3 +61,13 @@ class BaseService(ABC):
         )
 
         return api_key
+
+    def get_ai_models(self) -> list[str]:
+        """
+        Get all available Large Language Models (LLMs) for the user.
+
+        Returns:
+            list[str]: The available LLMs.
+        """
+
+        return self.ai_models
