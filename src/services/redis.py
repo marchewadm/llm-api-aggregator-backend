@@ -27,6 +27,9 @@ class RedisService:
     ) -> str:
         """
         Retrieve a specific API key for a user based on the API provider name.
+        When API key is found, lifetime of all keys in the user's API keys list is extended according to the
+        expiration time set in the settings.
+        TODO: Consider extending lifetime of only the specific key.
 
         Args:
             uuid (str): The user's UUID retrieved from user's JWT and stored in Redis.
@@ -48,12 +51,17 @@ class RedisService:
                 detail="Please provide a passphrase to continue.",
             )
 
+        pipeline = self.redis_client.pipeline()
         api_key_ids = await self.redis_client.smembers(user_api_keys_list)
+        decrypted_key: str = ""
 
         for api_key_id in api_key_ids:
             redis_key = f"user:{uuid}:{api_key_id}"
-            api_key_data = await self.redis_client.hgetall(redis_key)
+            await pipeline.expire(
+                redis_key, settings.REDIS_API_KEYS_EXPIRE_IN_SEC
+            )
 
+            api_key_data = await self.redis_client.hgetall(redis_key)
             if api_key_data:
                 if (
                     api_key_data.get("api_provider_lowercase_name", "").lower()
@@ -70,9 +78,13 @@ class RedisService:
                     fernet_key = Fernet(settings.FERNET_MASTER_KEY)
                     decrypted_key = fernet_key.decrypt(
                         passphrase_util.convert_hex_to_bytes(encrypted_key)
-                    )
+                    ).decode()
 
-                    return decrypted_key.decode()
+        await pipeline.expire(
+            user_api_keys_list, settings.REDIS_API_KEYS_EXPIRE_IN_SEC
+        )
+        await pipeline.execute()
+        return decrypted_key
 
     async def set_user_api_keys_in_cache(
         self, uuid: str, api_keys: ApiKeysResponse
