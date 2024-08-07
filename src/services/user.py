@@ -16,7 +16,7 @@ from src.schemas.user import (
     UserUpdatePassphraseResponse,
 )
 
-from .base import BaseService
+from .base.base import BaseService
 
 
 class UserService(BaseService[UserRepository]):

@@ -7,7 +7,7 @@ from src.schemas.api_provider import (
     ApiProvidersResponse,
 )
 
-from .base import BaseService
+from .base.base import BaseService
 
 
 class ApiProviderService(BaseService[ApiProviderRepository]):

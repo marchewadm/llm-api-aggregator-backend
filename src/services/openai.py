@@ -1,48 +1,77 @@
-from fastapi import HTTPException, status
+from fastapi import Depends, Security, HTTPException, status
 
 from openai import OpenAI, AuthenticationError
 
-from src.clients.schemas.openai import (
+from src.repositories.openai import OpenAiRepository
+from src.schemas.openai import (
     OpenAiChatCompletionRequest,
     OpenAiChatCompletionResponse,
 )
+from src.schemas.auth import AuthCurrentUser
 
-from .base import BaseService
+from .base.base import BaseAiService
+
+from src.services.redis import RedisService
+from src.services.auth import AuthService
 
 
-class OpenAiService(BaseService):
+class OpenAiService(BaseAiService[OpenAiRepository]):
     """
     Service for OpenAI related operations.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self, repository: OpenAiRepository = Depends(OpenAiRepository)
+    ) -> None:
         """
         Initializes the service.
+
+        Args:
+            repository (OpenAiRepository): The repository to use for OpenAI operations.
 
         Returns:
             None
         """
 
         super().__init__(
-            ai_models=[
+            repository,
+            [
                 "gpt-4",
                 "gpt-4-turbo",
                 "gpt-4o",
                 "gpt-4o-mini",
                 "gpt-3.5-turbo",
-            ]
+            ],
         )
 
-    @classmethod
-    def _get_api_provider_name(cls) -> str:
+    def create(self, payload) -> None:
+        pass
+
+    @staticmethod
+    async def get_api_key(
+        auth: AuthCurrentUser = Security(AuthService.get_current_user),
+        redis_service: RedisService = Depends(RedisService),
+        api_provider_name: str = "openai",
+    ) -> str:
         """
-        The name of the API provider.
+        Retrieve an API key for a user based on the API provider name.
+
+        Args:
+            auth (AuthDependency): The authentication dependency.
+            redis_service (RedisServiceDependency): The Redis service dependency.
+            api_provider_name (str): The name of the API provider.
+
+        Raises:
+            HTTPException: Raised with status code 404 if the user does not have any API keys stored in Redis.
 
         Returns:
-            str: The name of the API provider.
+            str: The decrypted API key if found.
         """
 
-        return "openai"
+        api_key = await redis_service.get_user_specific_api_key_from_cache(
+            auth.uuid, api_provider_name
+        )
+        return api_key
 
     @staticmethod
     async def chat(

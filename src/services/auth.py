@@ -20,7 +20,7 @@ from src.schemas.auth import (
     AuthLoginResponse,
 )
 
-from .base import BaseService
+from .base.base import BaseService
 
 
 class AuthService(BaseService[UserRepository]):

@@ -14,7 +14,7 @@ from src.schemas.api_provider import ApiProvidersResponse
 
 from src.utils.passphrase import passphrase_util
 
-from .base import BaseService
+from .base.base import BaseService
 
 
 class ApiKeyService(BaseService[ApiKeyRepository]):

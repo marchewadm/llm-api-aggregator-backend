@@ -1,13 +1,13 @@
 from fastapi import APIRouter
 
-from src.dependencies import AuthDependency
-from src.clients.external_dependencies import (
+from src.dependencies import (
+    AuthDependency,
     OpenAiServiceDependency,
     OpenAiApiKeyDependency,
 )
 
-from src.clients.schemas.common import AiModelsResponse
-from src.clients.schemas.openai import (
+from src.schemas.common import AiModelsResponse
+from src.schemas.openai import (
     OpenAiChatCompletionRequest,
     OpenAiChatCompletionResponse,
 )
