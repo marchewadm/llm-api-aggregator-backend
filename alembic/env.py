@@ -7,11 +7,16 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
+# Do not remove this import, it is necessary for Alembic to detect the models
 from src.core.database import Base
 
+# Import all models here
 from src.models.user import User
 from src.models.api_provider import ApiProvider
 from src.models.api_key import ApiKey
+from src.clients.models.chat_room import ChatRoom
+from src.clients.models.base_chat_history import BaseChatHistory
+from src.clients.models.openai import OpenAiChatHistory
 
 from alembic import context
 
