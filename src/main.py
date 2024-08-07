@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis import asyncio as redis
 
 from .api import api_router
-from .config import settings
+from .core.config import settings
 
 
 @asynccontextmanager
