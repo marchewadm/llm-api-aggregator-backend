@@ -11,12 +11,12 @@ from sqlalchemy import pool
 from src.core.database import Base
 
 # Import all models here
-from src.models.user import User
-from src.models.api_provider import ApiProvider
-from src.models.api_key import ApiKey
-from src.clients.models.chat_room import ChatRoom
-from src.clients.models.base_chat_history import BaseChatHistory
-from src.clients.models.openai import OpenAiChatHistory
+from src.user.models import User
+from src.api_provider.models import ApiProvider
+from src.api_key.models import ApiKey
+from src.openai.models import OpenAiChatHistory
+from src.shared.models.base import BaseChatHistory
+from src.shared.models.chat_room import ChatRoom
 
 from alembic import context
 
