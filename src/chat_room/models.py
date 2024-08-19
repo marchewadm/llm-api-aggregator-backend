@@ -1,5 +1,5 @@
 import uuid
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
@@ -7,10 +7,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.core.database import Base
 
-# Due to circular import error we need to use TYPE_CHECKING to avoid it.
-# More info at: https://github.com/sqlalchemy/sqlalchemy/discussions/9576#discussioncomment-5510161
 if TYPE_CHECKING:
-    from .base import BaseChatHistory
+    from src.shared.models.base import ChatHistory
 
 
 class ChatRoom(Base):
@@ -21,6 +19,6 @@ class ChatRoom(Base):
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
-    chat_history: Mapped[List["BaseChatHistory"]] = relationship(
-        back_populates="chat_rooms"
+    chat_history: Mapped["ChatHistory"] = relationship(
+        back_populates="chat_room"
     )
