@@ -36,13 +36,6 @@ class ApiKeyService(BaseService[ApiKeyRepository]):
 
         super().__init__(repository)
 
-    def create(self, payload) -> None:
-        """
-        This method is implemented in AuthService, but not in ApiKeyService.
-        """
-
-        pass
-
     def get_user_api_keys(
         self, user_id: int, fernet_key: Fernet
     ) -> ApiKeysResponse:

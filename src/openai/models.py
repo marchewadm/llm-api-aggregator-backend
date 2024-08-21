@@ -11,6 +11,8 @@ class OpenAiChatHistory(ChatHistory):
         ForeignKey("chat_history.id"), primary_key=True, autoincrement=True
     )
     role: Mapped[str] = mapped_column(String(15))
+    ai_model: Mapped[str]
+    custom_instructions: Mapped[str]
 
     __mapper_args__ = {
         "polymorphic_identity": "openai_chat_history",

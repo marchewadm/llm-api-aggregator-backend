@@ -6,9 +6,14 @@ from src.shared.service.base import BaseAiService
 
 from src.auth.dependencies import AuthDependency
 from src.redis.dependencies import RedisServiceDependency
+from src.chat_room.dependencies import ChatRoomServiceDependency
 
 from .repository import OpenAiRepository
-from .schemas import OpenAiChatCompletionRequest, OpenAiChatCompletionResponse
+from .schemas import (
+    OpenAiChatCompletionRequest,
+    OpenAiChatCompletionResponse,
+    OpenAiChatHistoryInDb,
+)
 
 
 class OpenAiService(BaseAiService[OpenAiRepository]):
@@ -40,8 +45,18 @@ class OpenAiService(BaseAiService[OpenAiRepository]):
             ],
         )
 
-    def create(self, payload) -> None:
-        pass
+    def create(self, payload: OpenAiChatHistoryInDb) -> None:
+        """
+        Create a new OpenAI chat history record in the database.
+
+        Args:
+            payload (OpenAiChatHistoryInDb): The payload containing the chat history data.
+
+        Returns:
+            None
+        """
+
+        self.repository.create(payload.model_dump())
 
     @staticmethod
     async def get_api_key(
@@ -69,17 +84,27 @@ class OpenAiService(BaseAiService[OpenAiRepository]):
         )
         return api_key
 
-    @staticmethod
     async def chat(
-        api_key: str, payload: OpenAiChatCompletionRequest
+        self,
+        user_id: int,
+        api_key: str,
+        payload: OpenAiChatCompletionRequest,
+        chat_room_service: ChatRoomServiceDependency,
     ) -> OpenAiChatCompletionResponse:
         """
         Chat with OpenAI using the specified model.
 
+        TODO: Handle more exceptions and edge cases.
+        TODO: Store the chat history in Redis and PostgreSQL.
+        TODO: Implement the chat history retrieval endpoint.
+        TODO: Implement the chat history deletion endpoint.
+
         Args:
+            user_id (int): The user's ID.
             api_key (str): The OpenAI API key.
             payload (OpenAiChatCompletionRequest): The payload containing the AI model name, optional custom
             instructions for the AI model and the message history containing the role and content.
+            chat_room_service (ChatRoomServiceDependency): The chat room service dependency.
 
         Raises:
             HTTPException: Raised with status code 400 if the AI model name is invalid.
@@ -88,6 +113,17 @@ class OpenAiService(BaseAiService[OpenAiRepository]):
         Returns:
             OpenAiChatCompletionResponse: The response containing AI model's message and timestamp.
         """
+
+        if not payload.room_uuid and len(payload.messages) == 1:
+            chat_room_uuid = chat_room_service.create(user_id)
+
+            payload: OpenAiChatCompletionRequest = payload.model_copy(
+                update={"room_uuid": chat_room_uuid}
+            )
+        else:
+            chat_room_service.verify_chat_room_exists(
+                user_id, payload.room_uuid
+            )
 
         try:
             client: OpenAI = OpenAI(api_key=api_key)
@@ -99,17 +135,30 @@ class OpenAiService(BaseAiService[OpenAiRepository]):
                         "role": "system",
                         "content": payload.custom_instructions,
                     },
-                    *payload.get_sorted_messages(),
+                    *payload.messages,
                 ],
             )
 
-            # TODO: Store the chat history in Redis and PostgreSQL.
-            # TODO: Implement the chat history retrieval endpoint.
-            # TODO: Implement the chat history deletion endpoint.
-            # TODO: Implement the chat history update endpoint.
-            # TODO: Implement missing created_at field in OpenAiChatCompletionResponse.
+            user_chat_history = OpenAiChatHistoryInDb(
+                room_uuid=payload.room_uuid,
+                message=payload.messages[-1].content,
+                role="user",
+                ai_model=payload.ai_model,
+                custom_instructions=payload.custom_instructions,
+            )
+            assistant_chat_history = OpenAiChatHistoryInDb(
+                room_uuid=payload.room_uuid,
+                message=response.choices[0].message.content,
+                role="assistant",
+                ai_model=payload.ai_model,
+                custom_instructions=payload.custom_instructions,
+            )
+
+            self.create(user_chat_history)
+            self.create(assistant_chat_history)
 
             return OpenAiChatCompletionResponse(
+                room_uuid=payload.room_uuid,
                 response_message=response.choices[0].message.content,
             )
         except AuthenticationError:

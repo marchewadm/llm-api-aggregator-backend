@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from src.shared.schemas.common import AiModelsResponse
 
 from src.auth.dependencies import AuthDependency
+from src.chat_room.dependencies import ChatRoomServiceDependency
 from .dependencies import OpenAiServiceDependency, OpenAiApiKeyDependency
 
 from .schemas import OpenAiChatCompletionRequest, OpenAiChatCompletionResponse
@@ -29,10 +30,13 @@ async def chat_with_openai(
     auth: AuthDependency,
     api_key: OpenAiApiKeyDependency,
     openai_service: OpenAiServiceDependency,
+    chat_room_service: ChatRoomServiceDependency,
     payload: OpenAiChatCompletionRequest,
 ):
     """
     Send message to OpenAI's model and get response from it.
     """
 
-    return await openai_service.chat(api_key, payload)
+    return await openai_service.chat(
+        auth.user_id, api_key, payload, chat_room_service
+    )
