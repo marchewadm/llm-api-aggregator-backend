@@ -61,8 +61,13 @@ class ChatRoomRepository(BaseRepository[ChatRoom]):
             Sequence[ChatRoom]: List of chat rooms.
         """
 
-        return self.db.scalars(
-            select(self.model)
-            .options(joinedload(self.model.chat_history))
-            .where(self.model.user_id == user_id)
-        ).all()
+        return (
+            self.db.execute(
+                select(self.model)
+                .options(joinedload(self.model.chat_history))
+                .where(self.model.user_id == user_id)
+            )
+            .unique()
+            .scalars()
+            .all()
+        )

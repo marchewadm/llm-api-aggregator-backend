@@ -70,24 +70,28 @@ class ChatRoomService(BaseService[ChatRoomRepository]):
                 detail="Chat room with the provided UUID does not belong to the user.",
             )
 
-    # def get_all_by_user_id(self, user_id: int):
-    #     """
-    #     Get all chat rooms associated with a user by user's ID.
-    #
-    #     Args:
-    #         user_id (int): The user's ID.
-    #
-    #     Returns:
-    #
-    #     """
-    #
-    #     chat_rooms = self.repository.get_all_by_user_id(user_id)
-    #
-    #     if chat_rooms:
-    #         chat_rooms = [
-    #             ChatRoom(
-    #                 room_uuid=chat_room.room_uuid,
-    #                 last_message=chat_room.chat_history.message,
-    #             )
-    #             for chat_room in chat_rooms
-    #         ]
+    def get_all_by_user_id(self, user_id: int) -> UserChatRoomsResponse:
+        """
+        Get all chat rooms associated with a user.
+
+        Args:
+            user_id (int): The user's ID.
+
+        Returns:
+            UserChatRoomsResponse: Response containing a list of chat rooms with the last message
+            and the time it was sent.
+        """
+
+        chat_rooms = self.repository.get_all_by_user_id(user_id)
+
+        if chat_rooms:
+            chat_rooms = [
+                ChatRoom(
+                    room_uuid=chat_room.room_uuid,
+                    last_message=chat_room.chat_history[-1].message,
+                    last_message_sent_at=chat_room.chat_history[-1].sent_at,
+                )
+                for chat_room in chat_rooms
+            ]
+
+        return UserChatRoomsResponse(chat_rooms=chat_rooms)

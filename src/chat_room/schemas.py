@@ -1,8 +1,10 @@
+import uuid
+
 from pydantic import BaseModel, PastDatetime, field_validator
 
 
 class ChatRoom(BaseModel):
-    room_uuid: str
+    room_uuid: uuid.UUID
     last_message: str
     last_message_sent_at: PastDatetime
 
@@ -22,3 +24,14 @@ class ChatRoom(BaseModel):
 
 class UserChatRoomsResponse(BaseModel):
     chat_rooms: list[ChatRoom]
+
+    @field_validator("chat_rooms")
+    @classmethod
+    def sort_descending(cls, value: list[ChatRoom]):
+        """
+        Sort the chat rooms by 'last_message_sent_at' date in descending order.
+        """
+
+        if value:
+            value.sort(key=lambda x: x.last_message_sent_at, reverse=True)
+        return value
