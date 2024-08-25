@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, load_only
 
@@ -79,12 +81,12 @@ class BaseRepository[T]:
             .where(filter_column == filter_value)
         )
 
-    def delete_by_id(self, entity_id: int) -> None:
+    def delete_by_id(self, entity_id: int | UUID) -> None:
         """
         Delete an entity from the database by its ID.
 
         Args:
-            entity_id (int): The ID of the entity to delete from the database.
+            entity_id (int | UUID): The ID of the entity to delete from the database.
 
         Returns:
             None

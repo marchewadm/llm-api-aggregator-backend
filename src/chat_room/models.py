@@ -20,5 +20,6 @@ class ChatRoom(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     chat_history: Mapped[list["ChatHistory"]] = relationship(
-        back_populates="chat_room"
+        back_populates="chat_room",
+        cascade="all, delete-orphan",
     )

@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter
 
 from src.auth.dependencies import AuthDependency
@@ -18,3 +20,16 @@ async def get_all_chat_rooms(
     """
 
     return chat_room_service.get_all_by_user_id(auth.user_id)
+
+
+@router.delete("/{room_uuid}")
+async def delete_chat_room(
+    room_uuid: uuid.UUID,
+    auth: AuthDependency,
+    chat_room_service: ChatRoomServiceDependency,
+):
+    """
+    Delete a chat room associated with the user by its UUID.
+    """
+
+    return chat_room_service.delete_chat_room(auth.user_id, room_uuid)

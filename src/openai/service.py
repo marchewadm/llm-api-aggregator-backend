@@ -97,7 +97,6 @@ class OpenAiService(BaseAiService[OpenAiRepository]):
         TODO: Handle more exceptions and edge cases.
         TODO: Store the chat history in Redis and PostgreSQL.
         TODO: Implement the chat history retrieval endpoint.
-        TODO: Implement the chat history deletion endpoint.
 
         Args:
             user_id (int): The user's ID.

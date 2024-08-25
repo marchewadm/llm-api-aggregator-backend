@@ -41,13 +41,17 @@ class ChatRoomService(BaseService[ChatRoomRepository]):
 
         return self.repository.create({"user_id": user_id})
 
-    def verify_chat_room_exists(self, user_id: int, room_uuid: str) -> None:
+    def verify_chat_room_exists(
+        self, user_id: int, room_uuid: uuid.UUID
+    ) -> None:
         """
         Verify if a chat room exists and belongs to a user.
 
+        TODO: Consider using this method as a dependency.
+
         Args:
             user_id (int): The user's ID.
-            room_uuid (str): The chat room's UUID.
+            room_uuid (uuid.UUID): The chat room's UUID.
 
         Raises:
             HTTPException: Raised with a 404 status code if the chat room does not exist or does not belong to the user.
@@ -60,7 +64,7 @@ class ChatRoomService(BaseService[ChatRoomRepository]):
             self.repository.get_one_with_selected_attributes_by_condition(
                 ["user_id"],
                 "room_uuid",
-                room_uuid,
+                str(room_uuid),
             )
         )
 
@@ -95,3 +99,18 @@ class ChatRoomService(BaseService[ChatRoomRepository]):
             ]
 
         return UserChatRoomsResponse(chat_rooms=chat_rooms)
+
+    def delete_chat_room(self, user_id: int, room_uuid: uuid.UUID) -> None:
+        """
+        Delete a chat room associated with a user by its UUID.
+
+        Args:
+            user_id (int): The user's ID.
+            room_uuid (uuid.UUID): The chat room's UUID.
+
+        Returns:
+            None
+        """
+
+        self.verify_chat_room_exists(user_id, room_uuid)
+        self.repository.delete_by_id(room_uuid)
