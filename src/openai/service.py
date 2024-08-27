@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import Depends, HTTPException, status
 
 from openai import OpenAI, AuthenticationError
@@ -13,6 +15,8 @@ from .schemas import (
     OpenAiChatCompletionRequest,
     OpenAiChatCompletionResponse,
     OpenAiChatHistoryInDb,
+    OpenAiChatHistoryMessageObject,
+    OpenAiChatHistoryResponse,
 )
 
 
@@ -84,6 +88,44 @@ class OpenAiService(BaseAiService[OpenAiRepository]):
         )
         return api_key
 
+    def get_user_chat_history(
+        self,
+        user_id: int,
+        room_uuid: UUID,
+        chat_room_service: ChatRoomServiceDependency,
+    ):
+        """
+        Get a user's chat history from the database.
+
+        Args:
+            user_id (int): The user's ID.
+            room_uuid (UUID): The chat room's UUID.
+            chat_room_service (ChatRoomServiceDependency): The chat room service dependency.
+
+        Raises:
+            HTTPException: Raised with status code 404 if the chat room does not exist.
+
+        Returns:
+            OpenAiChatHistoryResponse: The response containing the chat history.
+        """
+
+        chat_room_service.verify_chat_room_exists(user_id, room_uuid)
+
+        chat_histories = self.repository.get_chat_history_by_room_uuid(
+            room_uuid
+        )
+
+        messages = [
+            OpenAiChatHistoryMessageObject(
+                role=chat_history.role,
+                message=chat_history.message,
+                sent_at=chat_history.sent_at,
+            )
+            for chat_history in chat_histories
+        ]
+
+        return OpenAiChatHistoryResponse(room_uuid=room_uuid, messages=messages)
+
     async def chat(
         self,
         user_id: int,
@@ -95,7 +137,7 @@ class OpenAiService(BaseAiService[OpenAiRepository]):
         Chat with OpenAI using the specified model.
 
         TODO: Handle more exceptions and edge cases.
-        TODO: Store the chat history in Redis and PostgreSQL.
+        TODO: Store the chat history in Redis
         TODO: Implement the chat history retrieval endpoint.
 
         Args:

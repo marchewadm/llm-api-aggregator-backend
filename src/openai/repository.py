@@ -4,12 +4,12 @@ from fastapi import Depends
 
 from src.core.database import get_db
 
-from src.shared.repository.base import BaseRepository
+from src.shared.repository.base import BaseAiRepository
 
 from .models import OpenAiChatHistory
 
 
-class OpenAiRepository(BaseRepository[OpenAiChatHistory]):
+class OpenAiRepository(BaseAiRepository[OpenAiChatHistory]):
     """
     Repository for OpenAI database related operations.
     """

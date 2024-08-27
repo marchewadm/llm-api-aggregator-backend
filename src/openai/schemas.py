@@ -1,18 +1,12 @@
-import uuid
+from uuid import UUID
 from typing import Literal, Optional
 
 from pydantic import BaseModel
 
-from src.shared.schemas.common import ChatHistoryInDb
+from src.shared.schemas.common import ChatHistoryInDb, ChatHistoryResponse
 
 
-class OpenAiChatCompletionMessage(BaseModel):
-    role: Literal["user", "assistant"]
-    content: str
-
-
-class OpenAiChatCompletionRequest(BaseModel):
-    room_uuid: Optional[uuid.UUID] = None
+class OpenAiModel(BaseModel):
     ai_model: Literal[
         "gpt-4",
         "gpt-4-turbo",
@@ -20,22 +14,35 @@ class OpenAiChatCompletionRequest(BaseModel):
         "gpt-4o-mini",
         "gpt-3.5-turbo",
     ]
+
+
+class OpenAiRole(BaseModel):
+    role: Literal["user", "assistant"]
+
+
+class OpenAiChatCompletionMessage(OpenAiRole):
+    content: str
+
+
+class OpenAiChatCompletionRequest(OpenAiModel):
+    room_uuid: Optional[UUID] = None
     custom_instructions: Optional[str] = "You are a helpful assistant."
     messages: list[OpenAiChatCompletionMessage]
 
 
 class OpenAiChatCompletionResponse(BaseModel):
-    room_uuid: uuid.UUID
+    room_uuid: UUID
     response_message: str
 
 
-class OpenAiChatHistoryInDb(ChatHistoryInDb):
-    role: Literal["user", "assistant"]
-    ai_model: Literal[
-        "gpt-4",
-        "gpt-4-turbo",
-        "gpt-4o",
-        "gpt-4o-mini",
-        "gpt-3.5-turbo",
-    ]
+class OpenAiChatHistoryInDb(OpenAiModel, OpenAiRole, ChatHistoryInDb):
     custom_instructions: str
+
+
+class OpenAiChatHistoryMessageObject(OpenAiRole, ChatHistoryResponse):
+    pass
+
+
+class OpenAiChatHistoryResponse(BaseModel):
+    room_uuid: UUID
+    messages: list[OpenAiChatHistoryMessageObject]

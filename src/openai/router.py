@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter
 
 from src.shared.schemas.common import AiModelsResponse
@@ -6,7 +8,11 @@ from src.auth.dependencies import AuthDependency
 from src.chat_room.dependencies import ChatRoomServiceDependency
 from .dependencies import OpenAiServiceDependency, OpenAiApiKeyDependency
 
-from .schemas import OpenAiChatCompletionRequest, OpenAiChatCompletionResponse
+from .schemas import (
+    OpenAiChatCompletionRequest,
+    OpenAiChatCompletionResponse,
+    OpenAiChatHistoryResponse,
+)
 
 
 router = APIRouter(prefix="/openai", tags=["openai"])
@@ -23,6 +29,22 @@ async def get_openai_models(
     """
 
     return openai_service.get_ai_models()
+
+
+@router.get("/history/{room_uuid}", response_model=OpenAiChatHistoryResponse)
+async def get_chat_history(
+    chat_room_uuid: UUID,
+    auth: AuthDependency,
+    openai_service: OpenAiServiceDependency,
+    chat_room_service: ChatRoomServiceDependency,
+):
+    """
+    Get the chat history of a specified chat room associated with the user.
+    """
+
+    return openai_service.get_user_chat_history(
+        auth.user_id, chat_room_uuid, chat_room_service
+    )
 
 
 @router.post("/chat", response_model=OpenAiChatCompletionResponse)

@@ -1,6 +1,6 @@
-import uuid
+from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PastDatetime
 
 
 class AiModelsResponse(BaseModel):
@@ -8,5 +8,10 @@ class AiModelsResponse(BaseModel):
 
 
 class ChatHistoryInDb(BaseModel):
-    room_uuid: uuid.UUID
+    room_uuid: UUID
     message: str
+
+
+class ChatHistoryResponse(BaseModel):
+    message: str
+    sent_at: PastDatetime
