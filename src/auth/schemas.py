@@ -22,7 +22,9 @@ class AuthRegisterRequest(BaseModel):
     email: EmailStr
     name: Annotated[str, Field(min_length=1, max_length=50)]
     password: Annotated[SecretStr | str, Field(min_length=8)]
-    password_2: Annotated[SecretStr, Field(min_length=8)]
+    password_2: Annotated[
+        SecretStr, Field(min_length=8, validation_alias="password2")
+    ]
 
     @field_validator("password_2")
     @classmethod

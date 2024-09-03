@@ -1,14 +1,20 @@
-from typing import Optional
+from typing import Optional, Annotated
 
-from pydantic import BaseModel, SecretStr, field_validator
+from pydantic import BaseModel, SecretStr, field_validator, Field
 
 
 class ApiKey(BaseModel):
     id: int
     key: str
-    api_provider_id: Optional[int] = None
-    api_provider_name: str
-    api_provider_lowercase_name: str
+    api_provider_id: Annotated[
+        int | None, Field(serialization_alias="apiProviderId", default=None)
+    ]
+    api_provider_name: Annotated[
+        str, Field(serialization_alias="apiProviderName")
+    ]
+    api_provider_lowercase_name: Annotated[
+        str, Field(serialization_alias="apiProviderLowercaseName")
+    ]
 
 
 class ApiKeysPassphraseRequest(BaseModel):
@@ -17,12 +23,15 @@ class ApiKeysPassphraseRequest(BaseModel):
 
 class ApiKeyCreate(BaseModel):
     key: str
-    api_provider_id: int
+    api_provider_id: Annotated[int, Field(validation_alias="apiProviderId")]
 
 
 class ApiKeysUpdateRequest(BaseModel):
     passphrase: SecretStr
-    api_keys: Optional[list[ApiKeyCreate]] = None
+    api_keys: Annotated[
+        list[ApiKeyCreate] | None,
+        Field(validation_alias="apiKeys", default=None),
+    ]
 
     @field_validator("api_keys")
     @classmethod
