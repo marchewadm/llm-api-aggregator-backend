@@ -1,4 +1,5 @@
 import os
+import alembic_postgresql_enum
 
 from dotenv import load_dotenv
 
@@ -14,9 +15,8 @@ from src.core.database import Base
 from src.user.models import User
 from src.api_provider.models import ApiProvider
 from src.api_key.models import ApiKey
-from src.shared.models.base import ChatHistory
+from src.chat_history.models import ChatHistory
 from src.chat_room.models import ChatRoom
-from src.openai.models import OpenAiChatHistory
 
 from alembic import context
 

@@ -3,6 +3,7 @@ import uuid
 from fastapi import Depends, HTTPException, status
 
 from src.shared.service.base import BaseService
+from src.shared.schemas import ChatHistoryCompletionRequest
 
 from .repository import ChatRoomRepository
 from .schemas import ChatRoom, UserChatRoomsResponse
@@ -74,6 +75,31 @@ class ChatRoomService(BaseService[ChatRoomRepository]):
                 detail="Chat room with the provided UUID does not belong to the user.",
             )
 
+    def handle_room_uuid(
+        self, user_id: int, payload: ChatHistoryCompletionRequest
+    ) -> ChatHistoryCompletionRequest:
+        """
+        Handle the room UUID in the payload.
+
+        Args:
+            user_id (int): The ID of the user.
+            payload (ChatHistoryCompletionRequest): The payload containing the chat history data.
+
+        Returns:
+            ChatHistoryCompletionRequest: The payload with the room UUID.
+        """
+
+        if not payload.room_uuid and len(payload.messages) == 1:
+            chat_room_uuid = self.create(user_id)
+
+            payload: ChatHistoryCompletionRequest = payload.model_copy(
+                update={"room_uuid": chat_room_uuid}
+            )
+        else:
+            self.verify_chat_room_exists(user_id, payload.room_uuid)
+
+        return payload
+
     def get_all_by_user_id(self, user_id: int) -> UserChatRoomsResponse:
         """
         Get all chat rooms associated with a user.
@@ -94,6 +120,7 @@ class ChatRoomService(BaseService[ChatRoomRepository]):
                     room_uuid=chat_room.room_uuid,
                     last_message=chat_room.chat_history[-1].message,
                     last_message_sent_at=chat_room.chat_history[-1].sent_at,
+                    api_provider_id=chat_room.chat_history[-1].api_provider_id,
                 )
                 for chat_room in chat_rooms
             ]
