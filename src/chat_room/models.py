@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.database import Base
 
 if TYPE_CHECKING:
-    from src.shared.models.base import ChatHistory
+    from src.chat_history.models import ChatHistory
 
 
 class ChatRoom(Base):

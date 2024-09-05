@@ -1,6 +1,4 @@
-from uuid import UUID
-
-from fastapi import Depends, HTTPException, status
+from fastapi import HTTPException, status
 
 from openai import OpenAI, AuthenticationError
 
@@ -9,37 +7,28 @@ from src.shared.service.base import BaseAiService
 from src.auth.dependencies import AuthDependency
 from src.redis.dependencies import RedisServiceDependency
 from src.chat_room.dependencies import ChatRoomServiceDependency
+from src.chat_history.dependencies import ChatHistoryServiceDependency
 
-from .repository import OpenAiRepository
-from .schemas import (
-    OpenAiChatCompletionRequest,
-    OpenAiChatCompletionResponse,
-    OpenAiChatHistoryInDb,
-    OpenAiChatHistoryMessageObject,
-    OpenAiChatHistoryResponse,
+from src.shared.schemas import (
+    ChatHistoryCompletionRequest,
+    ChatHistoryCompletionResponse,
 )
 
 
-class OpenAiService(BaseAiService[OpenAiRepository]):
+class OpenAiService(BaseAiService):
     """
     Service for OpenAI related operations.
     """
 
-    def __init__(
-        self, repository: OpenAiRepository = Depends(OpenAiRepository)
-    ) -> None:
+    def __init__(self) -> None:
         """
         Initializes the service.
-
-        Args:
-            repository (OpenAiRepository): The repository to use for OpenAI operations.
 
         Returns:
             None
         """
 
         super().__init__(
-            repository,
             [
                 "gpt-4",
                 "gpt-4-turbo",
@@ -48,19 +37,6 @@ class OpenAiService(BaseAiService[OpenAiRepository]):
                 "gpt-3.5-turbo",
             ],
         )
-
-    def create(self, payload: OpenAiChatHistoryInDb) -> None:
-        """
-        Create a new OpenAI chat history record in the database.
-
-        Args:
-            payload (OpenAiChatHistoryInDb): The payload containing the chat history data.
-
-        Returns:
-            None
-        """
-
-        self.repository.create(payload.model_dump())
 
     @staticmethod
     async def get_api_key(
@@ -88,83 +64,36 @@ class OpenAiService(BaseAiService[OpenAiRepository]):
         )
         return api_key
 
-    def get_user_chat_history(
-        self,
-        user_id: int,
-        room_uuid: UUID,
-        chat_room_service: ChatRoomServiceDependency,
-    ):
-        """
-        Get a user's chat history from the database.
-
-        Args:
-            user_id (int): The user's ID.
-            room_uuid (UUID): The chat room's UUID.
-            chat_room_service (ChatRoomServiceDependency): The chat room service dependency.
-
-        Raises:
-            HTTPException: Raised with status code 404 if the chat room does not exist.
-
-        Returns:
-            OpenAiChatHistoryResponse: The response containing the chat history.
-        """
-
-        chat_room_service.verify_chat_room_exists(user_id, room_uuid)
-
-        chat_histories = self.repository.get_chat_history_by_room_uuid(
-            room_uuid
-        )
-
-        messages = [
-            OpenAiChatHistoryMessageObject(
-                role=chat_history.role,
-                message=chat_history.message,
-                sent_at=chat_history.sent_at,
-            )
-            for chat_history in chat_histories
-        ]
-
-        return OpenAiChatHistoryResponse(room_uuid=room_uuid, messages=messages)
-
+    @staticmethod
     async def chat(
-        self,
         user_id: int,
         api_key: str,
-        payload: OpenAiChatCompletionRequest,
         chat_room_service: ChatRoomServiceDependency,
-    ) -> OpenAiChatCompletionResponse:
+        chat_history_service: ChatHistoryServiceDependency,
+        payload: ChatHistoryCompletionRequest,
+    ):
         """
-        Chat with OpenAI using the specified model.
-
         TODO: Handle more exceptions and edge cases.
         TODO: Store the chat history in Redis
-        TODO: Implement the chat history retrieval endpoint.
+
+        Send message to OpenAI's model, get response from it, store the chat history and return the response.
 
         Args:
             user_id (int): The user's ID.
             api_key (str): The OpenAI API key.
-            payload (OpenAiChatCompletionRequest): The payload containing the AI model name, optional custom
-            instructions for the AI model and the message history containing the role and content.
             chat_room_service (ChatRoomServiceDependency): The chat room service dependency.
+            chat_history_service (ChatHistoryServiceDependency): The chat history service dependency.
+            payload (ChatHistoryCompletionRequest): The payload containing the AI model name, optional custom
+            instructions for the AI model and the message history containing the role and content.
 
         Raises:
-            HTTPException: Raised with status code 400 if the AI model name is invalid.
             HTTPException: Raised with status code 401 if the OpenAI API key is invalid.
 
         Returns:
-            OpenAiChatCompletionResponse: The response containing AI model's message and timestamp.
+            ChatHistoryCompletionResponse: The response containing AI model's message and room UUID.
         """
 
-        if not payload.room_uuid and len(payload.messages) == 1:
-            chat_room_uuid = chat_room_service.create(user_id)
-
-            payload: OpenAiChatCompletionRequest = payload.model_copy(
-                update={"room_uuid": chat_room_uuid}
-            )
-        else:
-            chat_room_service.verify_chat_room_exists(
-                user_id, payload.room_uuid
-            )
+        payload = chat_room_service.handle_room_uuid(user_id, payload)
 
         try:
             client: OpenAI = OpenAI(api_key=api_key)
@@ -176,31 +105,23 @@ class OpenAiService(BaseAiService[OpenAiRepository]):
                         "role": "system",
                         "content": payload.custom_instructions,
                     },
-                    *payload.messages,
+                    *[
+                        {
+                            "role": msg_payload.role,
+                            "content": msg_payload.message,
+                        }
+                        for msg_payload in payload.messages
+                    ],
                 ],
             )
 
-            user_chat_history = OpenAiChatHistoryInDb(
-                room_uuid=payload.room_uuid,
-                message=payload.messages[-1].content,
-                role="user",
-                ai_model=payload.ai_model,
-                custom_instructions=payload.custom_instructions,
+            chat_history_service.store_chat_history(
+                response.choices[0].message.content, payload
             )
-            assistant_chat_history = OpenAiChatHistoryInDb(
+
+            return ChatHistoryCompletionResponse(
                 room_uuid=payload.room_uuid,
                 message=response.choices[0].message.content,
-                role="assistant",
-                ai_model=payload.ai_model,
-                custom_instructions=payload.custom_instructions,
-            )
-
-            self.create(user_chat_history)
-            self.create(assistant_chat_history)
-
-            return OpenAiChatCompletionResponse(
-                room_uuid=payload.room_uuid,
-                response_message=response.choices[0].message.content,
             )
         except AuthenticationError:
             raise HTTPException(

@@ -1,5 +1,4 @@
 from uuid import UUID
-from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, load_only
@@ -95,42 +94,3 @@ class BaseRepository[T]:
 
         self.db.delete(self.db.get_one(self.model, entity_id))
         self.db.commit()
-
-
-class BaseAiRepository[T](BaseRepository[T]):
-    """
-    Base abstract class for AI repositories.
-
-    This class enforces the use of an instance of a base repository for operations.
-    All AI repositories should inherit from this class.
-
-    Contains some already implemented methods that can be used by child classes.
-    """
-
-    def __init__(self, db: Session, model: type[T]) -> None:
-        """
-        Initialize the AI repository with a database session.
-
-        Args:
-            db (Session): Database session.
-
-        Returns:
-            None
-        """
-
-        super().__init__(db, model)
-
-    def get_chat_history_by_room_uuid(self, room_uuid: UUID) -> Sequence[T]:
-        """
-        Get the chat history for a specific chat room.
-
-        Args:
-            room_uuid (UUID): The UUID of the chat room.
-
-        Returns:
-            Sequence[T]: A sequence of chat history objects.
-        """
-
-        return self.db.scalars(
-            select(self.model).where(self.model.room_uuid == room_uuid)
-        ).all()

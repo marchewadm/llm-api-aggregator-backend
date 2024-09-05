@@ -1,12 +1,17 @@
-import uuid
+from typing import Annotated
 
-from pydantic import BaseModel, PastDatetime, field_validator
+from uuid import UUID
+
+from pydantic import BaseModel, PastDatetime, field_validator, Field
 
 
 class ChatRoom(BaseModel):
-    room_uuid: uuid.UUID
-    last_message: str
-    last_message_sent_at: PastDatetime
+    room_uuid: Annotated[UUID, Field(serialization_alias="roomUuid")]
+    last_message: Annotated[str, Field(serialization_alias="lastMessage")]
+    last_message_sent_at: Annotated[
+        PastDatetime, Field(serialization_alias="lastMessageSentAt")
+    ]
+    api_provider_id: Annotated[int, Field(serialization_alias="apiProviderId")]
 
     @field_validator("last_message")
     @classmethod
@@ -23,7 +28,9 @@ class ChatRoom(BaseModel):
 
 
 class UserChatRoomsResponse(BaseModel):
-    chat_rooms: list[ChatRoom]
+    chat_rooms: Annotated[
+        list[ChatRoom], Field(serialization_alias="chatRooms")
+    ]
 
     @field_validator("chat_rooms")
     @classmethod
