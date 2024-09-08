@@ -6,10 +6,6 @@ from pydantic import BaseModel
 from src.shared.enums import RoleEnum, AiModelEnum
 
 
-class AiModelsResponse(BaseModel):
-    ai_models: list[str]
-
-
 class ChatHistoryCompletionMessage(BaseModel):
     message: str
     role: RoleEnum

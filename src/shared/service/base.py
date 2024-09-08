@@ -5,7 +5,6 @@ from sqlalchemy.exc import NoResultFound
 from fastapi import HTTPException, status
 
 from src.shared.repository.base import BaseRepository
-from src.shared.schemas import AiModelsResponse
 
 
 class BaseService[T: BaseRepository]:
@@ -81,18 +80,13 @@ class BaseAiService(ABC):
     Contains some already implemented methods that can be used by child classes.
     """
 
-    def __init__(self, ai_models: list[str]) -> None:
+    def __init__(self) -> None:
         """
-        Initialize the service with a repository and a list of supported AI models.
-
-        Args:
-            ai_models (list[str]): List of all supported AI models.
+        Initialize the service.
 
         Returns:
             None
         """
-
-        self.ai_models = ai_models
 
     @staticmethod
     @abstractmethod
@@ -110,13 +104,3 @@ class BaseAiService(ABC):
         """
 
         pass
-
-    def get_ai_models(self) -> AiModelsResponse:
-        """
-        Get all available Large Language Models (LLMs) for the user.
-
-        Returns:
-            AiModelsResponse: The response containing the list of all available LLMs.
-        """
-
-        return AiModelsResponse(ai_models=self.ai_models)

@@ -28,15 +28,7 @@ class OpenAiService(BaseAiService):
             None
         """
 
-        super().__init__(
-            [
-                "gpt-4",
-                "gpt-4-turbo",
-                "gpt-4o",
-                "gpt-4o-mini",
-                "gpt-3.5-turbo",
-            ],
-        )
+        super().__init__()
 
     @staticmethod
     async def get_api_key(

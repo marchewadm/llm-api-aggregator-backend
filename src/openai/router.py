@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 
 from src.shared.schemas import (
-    AiModelsResponse,
     ChatHistoryCompletionRequest,
     ChatHistoryCompletionResponse,
 )
@@ -13,18 +12,6 @@ from .dependencies import OpenAiServiceDependency, OpenAiApiKeyDependency
 
 
 router = APIRouter(prefix="/openai", tags=["openai"])
-
-
-@router.get("/models", response_model=AiModelsResponse)
-async def get_openai_models(
-    auth: AuthDependency,
-    openai_service: OpenAiServiceDependency,
-):
-    """
-    Get the available OpenAI models.
-    """
-
-    return openai_service.get_ai_models()
 
 
 @router.post("/chat", response_model=ChatHistoryCompletionResponse)
