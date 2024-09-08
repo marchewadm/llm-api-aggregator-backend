@@ -1,11 +1,9 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 
 from src.shared.service.base import BaseService
 
 from .repository import ApiProviderRepository
 from .schemas import (
-    ApiProviderCreateRequest,
-    ApiProviderCreateResponse,
     ApiProvidersResponse,
 )
 
@@ -29,40 +27,6 @@ class ApiProviderService(BaseService[ApiProviderRepository]):
         """
 
         super().__init__(repository)
-
-    def create(
-        self, payload: ApiProviderCreateRequest
-    ) -> ApiProviderCreateResponse:
-        """
-        Create new API provider and store it in the database.
-
-        Args:
-            payload (ApiProviderCreateRequest): Pydantic model containing the data to create the entity with.
-
-        Raises:
-            HTTPException: Raised with status code 409 if the API provider already exists.
-
-        Returns:
-            ApiProviderCreateResponse: A message informing that the API provider was created.
-                Message can be customized, but defaults to the one in the schema.
-        """
-
-        api_provider = (
-            self.repository.get_one_with_selected_attributes_by_condition(
-                ["id"],
-                "lowercase_name",
-                payload.lowercase_name,
-            )
-        )
-
-        if api_provider:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"API provider {payload.name} already exists. Name must be unique.",
-            )
-        self.repository.create(payload.model_dump())
-
-        return ApiProviderCreateResponse()
 
     def get_all(self) -> ApiProvidersResponse:
         """

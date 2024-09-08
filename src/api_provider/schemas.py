@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import BaseModel, Field, ConfigDict, computed_field, PastDatetime
+from pydantic import BaseModel, Field, ConfigDict, PastDatetime
 
 
 class ApiProvider(BaseModel):
@@ -8,26 +8,13 @@ class ApiProvider(BaseModel):
 
     id: int
     name: Annotated[str, Field(min_length=1, max_length=50)]
-
-
-class ApiProviderCreateRequest(BaseModel):
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    name: Annotated[str, Field(min_length=1, max_length=50)]
-
-    @computed_field
-    @property
-    def lowercase_name(self) -> str:
-        return self.name.lower()
-
-
-class ApiProviderCreateResponse(BaseModel):
-    message: str = "API provider created successfully."
+    ai_models: list[str]
 
 
 class ApiProviderResponse(ApiProvider):
     id: int
     lowercase_name: Annotated[str, Field(min_length=1, max_length=50)]
+    ai_models: list[str]
     created_at: PastDatetime
     updated_at: PastDatetime
 

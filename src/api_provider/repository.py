@@ -40,6 +40,6 @@ class ApiProviderRepository(BaseRepository[ApiProvider]):
 
         return self.db.scalars(
             select(self.model).options(
-                load_only(self.model.name, self.model.id)
+                load_only(self.model.id, self.model.name, self.model.ai_models)
             )
         ).all()
