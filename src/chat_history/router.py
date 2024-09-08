@@ -6,11 +6,13 @@ from src.auth.dependencies import AuthDependency
 from src.chat_room.dependencies import ChatRoomServiceDependency
 from .dependencies import ChatHistoryServiceDependency
 
+from .schemas import ChatHistoryResponse
+
 
 router = APIRouter(prefix="/chat-history", tags=["chat-history"])
 
 
-@router.get("/{room_uuid}")
+@router.get("/{room_uuid}", response_model=ChatHistoryResponse)
 async def get_chat_history(
     room_uuid: UUID,
     auth: AuthDependency,

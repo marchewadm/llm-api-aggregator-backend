@@ -95,10 +95,16 @@ FERNET_MASTER_KEY=YOUR_GENERATED_FERNET_MASTER_KEY
   ```
   Then you should copy the key as `YwBQY5h4XpXiFsffgrq-RJmZerMmAvjHFVgY4e9hx48=` (without the quotes) and paste it into the `.env` file.
 
-After creating the `.env` file, you should run the following command to create the database tables:
+After creating the .env file, run the following command to create the database tables:
 
 ```bash
 alembic upgrade head
+```
+
+Once the database tables have been created, run the following command from the root directory to execute the script that will initialize the API providers in the database:
+
+```bash
+python -m src.core.init_api_providers
 ```
 
 And that's it! Now you can proceed to the next step: running your new, freshly installed and configured app.
