@@ -112,11 +112,12 @@ class OpenAiService(BaseAiService):
             )
 
             return ChatHistoryCompletionResponse(
-                room_uuid=payload.room_uuid,
                 message=response.choices[0].message.content,
+                room_uuid=payload.room_uuid,
+                api_provider_id=payload.api_provider_id,
             )
         except AuthenticationError:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Invalid OpenAI API key.",
             )

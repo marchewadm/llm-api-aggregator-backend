@@ -49,7 +49,7 @@ class RedisService:
             provider_name (str): The name of the API provider (e.g., "openai").
 
         Raises:
-            HTTPException: Raised with status code 401 if the user does not have any API keys stored in Redis.
+            HTTPException: Raised with status code 403 if the user does not have any API keys stored in Redis.
             HTTPException: Raised with status code 404 if the user does not have an API key for the specified provider.
 
         Returns:
@@ -60,7 +60,7 @@ class RedisService:
 
         if not await self.redis_client.exists(user_api_keys_list):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Please provide a passphrase to continue.",
             )
 

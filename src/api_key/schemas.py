@@ -13,7 +13,7 @@ class ApiKey(BaseModel):
         str, Field(serialization_alias="apiProviderName")
     ]
     api_provider_lowercase_name: Annotated[
-        str, Field(serialization_alias="apiProviderLowercaseName")
+        str, Field(serialization_alias="apiProviderLowerCaseName")
     ]
 
 
@@ -49,7 +49,9 @@ class ApiKeysUpdateRequest(BaseModel):
 
 
 class ApiKeysResponse(BaseModel):
-    api_keys: Optional[list[ApiKey]] = None
+    api_keys: Annotated[
+        list[ApiKey] | None, Field(serialization_alias="apiKeysDetails", default=None)
+    ]
 
 
 class ApiKeysUpdateResponse(BaseModel):

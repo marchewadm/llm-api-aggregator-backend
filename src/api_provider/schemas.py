@@ -8,7 +8,7 @@ class ApiProvider(BaseModel):
 
     id: int
     name: Annotated[str, Field(min_length=1, max_length=50)]
-    ai_models: list[str]
+    ai_models: Annotated[list[str], Field(serialization_alias="aiModels")]
 
 
 class ApiProviderResponse(ApiProvider):
@@ -20,4 +20,7 @@ class ApiProviderResponse(ApiProvider):
 
 
 class ApiProvidersResponse(BaseModel):
-    api_providers: list[ApiProvider]
+    # api_providers: list[ApiProvider]
+    api_providers: Annotated[
+        list[ApiProvider], Field(serialization_alias="apiProviders")
+    ]

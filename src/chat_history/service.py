@@ -73,16 +73,27 @@ class ChatHistoryService(BaseService[ChatHistoryRepository]):
             room_uuid
         )
 
+        ai_model = chat_histories[-1].ai_model
+        custom_instructions = chat_histories[-1].custom_instructions
         messages = [
             ChatHistoryMessage(
                 role=chat_history.role,
                 message=chat_history.message,
-                sent_at=chat_history.sent_at,
+                api_provider_id=(
+                    chat_history.api_provider_id
+                    if chat_history.role == RoleEnum.assistant
+                    else None
+                ),
             )
             for chat_history in chat_histories
         ]
 
-        return ChatHistoryResponse(room_uuid=room_uuid, messages=messages)
+        return ChatHistoryResponse(
+            room_uuid=room_uuid,
+            ai_model=ai_model,
+            custom_instructions=custom_instructions,
+            messages=messages,
+        )
 
     def store_chat_history(
         self,
