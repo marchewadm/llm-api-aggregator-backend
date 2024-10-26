@@ -5,17 +5,20 @@ Its backend is built on FastAPI, SQLAlchemy for communicating with a PostgreSQL 
 
 ## Supported APIs
 
-Currently, the project is in the integration phase with OpenAI's API.
+- OpenAI
+- Google Gemini
 
 ## Prerequisites
 
-The prerequisites for running the project are as follows:
+To run the project, please ensure you have the following installed:
 
 - Python 3.12 or higher
 - PostgreSQL 15.6 or higher
 - Redis 7.2.5 or higher
 
-Application is probably compatible with lower versions of PostgreSQL and Redis, but it has not been tested yet.
+#### NOTE:
+
+If you are using Windows, you must enable the Windows Subsystem for Linux (WSL) and then install Redis. For detailed instructions, please refer to [how to install Redis on Windows?](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-windows/)
 
 ## Installation
 
