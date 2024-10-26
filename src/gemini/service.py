@@ -1,6 +1,7 @@
-from fastapi import HTTPException, status
+from fastapi import status, HTTPException
 
-from openai import OpenAI, AuthenticationError, NotFoundError
+from google import generativeai as genai
+from google.api_core.exceptions import InvalidArgument, NotFound
 
 from src.shared.service.base import BaseAiService
 
@@ -15,12 +16,12 @@ from src.shared.schemas import (
 )
 
 
-class OpenAiService(BaseAiService):
+class GeminiService(BaseAiService):
     """
-    Service for OpenAI related operations.
+    Service for Google Gemini related operations.
     """
 
-    def __init__(self) -> None:
+    def __init__(self):
         """
         Initializes the service.
 
@@ -34,7 +35,7 @@ class OpenAiService(BaseAiService):
     async def get_api_key(
         auth: AuthDependency,
         redis_service: RedisServiceDependency,
-        api_provider_name: str = "openai",
+        api_provider_name: str = "gemini",
     ) -> str:
         """
         Retrieve an API key for a user based on the API provider name.
@@ -65,64 +66,69 @@ class OpenAiService(BaseAiService):
         payload: ChatHistoryCompletionRequest,
     ) -> ChatHistoryCompletionResponse:
         """
-        TODO: Handle more exceptions and edge cases.
-        TODO: Store the chat history in Redis
-
-        Send message to OpenAI's model, get response from it, store the chat history and return the response.
+        Send message to Google Gemini's model, get response from it, store the chat history and return the response.
 
         Args:
             user_id (int): The user's ID.
-            api_key (str): The OpenAI API key.
+            api_key (str): The Gemini API key.
             chat_room_service (ChatRoomServiceDependency): The chat room service dependency.
             chat_history_service (ChatHistoryServiceDependency): The chat history service dependency.
-            payload (ChatHistoryCompletionRequest): The payload containing the AI model name, optional custom
-            instructions for the AI model and the message history containing the role and content.
+            payload (ChatHistoryCompletionRequest): The request payload containing the AI model name, optional custom
+             instructions for the AI model and the message history containing the role and content.
 
         Raises:
-            HTTPException: Raised with status code 403 if the OpenAI API key is invalid.
+            HTTPException: Raised with status code 403 if the Gemini API key is invalid.
 
         Returns:
-            ChatHistoryCompletionResponse: The response containing AI model's message and room UUID.
+            ChatHistoryCompletionResponse: The response containing room UUID, messages, API provider ID
+             with AI model name and its custom instructions.
         """
 
         payload = chat_room_service.handle_room_uuid(user_id, payload)
 
         try:
-            client: OpenAI = OpenAI(api_key=api_key)
+            genai.configure(api_key=api_key)
 
-            response = client.chat.completions.create(
-                model=payload.ai_model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": payload.custom_instructions,
-                    },
+            model = genai.GenerativeModel(
+                model_name=payload.ai_model,
+                system_instruction=payload.custom_instructions,
+            )
+
+            chat = model.start_chat(
+                history=[
                     *[
                         {
-                            "role": msg_payload.role,
-                            "content": msg_payload.message,
+                            "role": (
+                                "user"
+                                if msg_payload.role == "user"
+                                else "model"
+                            ),
+                            "parts": msg_payload.message,
                         }
-                        for msg_payload in payload.messages
-                    ],
-                ],
+                        # Exclude the last message because Gemini API uses it in the next line to perform the request
+                        for msg_payload in payload.messages[:-1]
+                    ]
+                ]
+            )
+            response = await chat.send_message_async(
+                payload.messages[-1].message
             )
 
-            chat_history_service.store_chat_history(
-                response.choices[0].message.content, payload
-            )
+            chat_history_service.store_chat_history(response.text, payload)
 
             return ChatHistoryCompletionResponse(
-                message=response.choices[0].message.content,
+                message=response.text,
                 room_uuid=payload.room_uuid,
                 api_provider_id=payload.api_provider_id,
             )
-        except AuthenticationError:
+        except InvalidArgument:
+            # Gemini throws InvalidArgument when the API key is invalid
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid OpenAI API key.",
+                detail="Invalid Gemini API key.",
             )
-        except NotFoundError:
+        except NotFound:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="OpenAI model not found.",
+                detail="Gemini model not found.",
             )
