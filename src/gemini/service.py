@@ -64,7 +64,7 @@ class GeminiService(BaseAiService):
         chat_room_service: ChatRoomServiceDependency,
         chat_history_service: ChatHistoryServiceDependency,
         payload: ChatHistoryCompletionRequest,
-    ):
+    ) -> ChatHistoryCompletionResponse:
         """
         Send message to Google Gemini's model, get response from it, store the chat history and return the response.
 

@@ -5,6 +5,10 @@ from sqlalchemy.exc import NoResultFound
 from fastapi import HTTPException, status
 
 from src.shared.repository.base import BaseRepository
+from src.shared.schemas import (
+    ChatHistoryCompletionRequest,
+    ChatHistoryCompletionResponse,
+)
 
 
 class BaseService[T: BaseRepository]:
@@ -76,8 +80,6 @@ class BaseAiService(ABC):
     Base abstract class for AI services.
 
     All AI services should inherit from this class.
-
-    Contains some already implemented methods that can be used by child classes.
     """
 
     def __init__(self) -> None:
@@ -101,6 +103,31 @@ class BaseAiService(ABC):
 
         Returns:
             str: The API key for the user.
+        """
+
+        pass
+
+    @staticmethod
+    @abstractmethod
+    async def chat(
+        user_id: int,
+        api_key: str,
+        chat_room_service,
+        chat_history_service,
+        payload: ChatHistoryCompletionRequest,
+    ) -> ChatHistoryCompletionResponse:
+        """
+        Send a message to one of the available API provider's model.
+
+        Args:
+            user_id (int): The user's ID.
+            api_key (str): The API provider's authentication key.
+            chat_room_service: The chat room service dependency.
+            chat_history_service: The chat history service dependency.
+            payload (ChatHistoryCompletionRequest): The request payload.
+
+        Returns:
+            ChatHistoryCompletionResponse: The response from the API provider.
         """
 
         pass

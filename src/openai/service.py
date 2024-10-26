@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from openai import OpenAI, AuthenticationError
+from openai import OpenAI, AuthenticationError, NotFoundError
 
 from src.shared.service.base import BaseAiService
 
@@ -63,7 +63,7 @@ class OpenAiService(BaseAiService):
         chat_room_service: ChatRoomServiceDependency,
         chat_history_service: ChatHistoryServiceDependency,
         payload: ChatHistoryCompletionRequest,
-    ):
+    ) -> ChatHistoryCompletionResponse:
         """
         TODO: Handle more exceptions and edge cases.
         TODO: Store the chat history in Redis
@@ -79,7 +79,7 @@ class OpenAiService(BaseAiService):
             instructions for the AI model and the message history containing the role and content.
 
         Raises:
-            HTTPException: Raised with status code 401 if the OpenAI API key is invalid.
+            HTTPException: Raised with status code 403 if the OpenAI API key is invalid.
 
         Returns:
             ChatHistoryCompletionResponse: The response containing AI model's message and room UUID.
@@ -120,4 +120,9 @@ class OpenAiService(BaseAiService):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Invalid OpenAI API key.",
+            )
+        except NotFoundError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="OpenAI model not found.",
             )
