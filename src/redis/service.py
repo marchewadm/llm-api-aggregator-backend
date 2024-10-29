@@ -1,4 +1,7 @@
+from typing import TypedDict, Dict
+
 from redis import asyncio as redis
+from redis.commands.json.path import Path
 
 from fastapi import Depends, Request, HTTPException, status
 
@@ -6,7 +9,7 @@ from cryptography.fernet import Fernet
 
 from src.core.config import settings
 
-from src.api_key.schemas import ApiKeysResponse
+from src.api_key.schemas import ApiKey, ApiKeysResponse
 
 from src.shared.utils.passphrase import passphrase_util
 
@@ -16,10 +19,20 @@ async def get_redis(request: Request) -> redis.Redis:
     Get a Redis connection.
 
     Returns:
-        Redis: The Redis connection.
+        redis.Redis: The Redis connection.
     """
 
     return request.app.state.redis_client
+
+
+class RedisApiKey(TypedDict):
+    key: str
+    api_provider_id: int
+    api_provider_name: str
+
+
+class RedisApiKeys(TypedDict):
+    apiKeys: Dict[str, RedisApiKey]
 
 
 class RedisService:
@@ -34,159 +47,124 @@ class RedisService:
 
         self.redis_client = redis_client
 
+    async def set_user_api_keys_in_cache(
+        self, user_uuid: str, api_keys: ApiKeysResponse
+    ) -> None:
+        """
+        Set the user's API keys in Redis.
+
+        Args:
+            user_uuid (str): The user's UUID.
+            api_keys (ApiKeysResponse): The user's API keys.
+
+        Returns:
+            None
+        """
+
+        api_keys_list: list[ApiKey] = api_keys.api_keys
+
+        if not api_keys_list:
+            return await self.delete_user_api_keys_from_cache(user_uuid)
+
+        user_data: RedisApiKeys = {"apiKeys": {}}
+        redis_key = f"user:{user_uuid}"
+        fernet_key = Fernet(settings.FERNET_MASTER_KEY)
+
+        for api_key_obj in api_keys_list:
+            user_data["apiKeys"][api_key_obj.api_provider_lowercase_name] = {
+                "key": passphrase_util.convert_bytes_to_hex(
+                    fernet_key.encrypt(api_key_obj.key.encode())
+                ),
+                "api_provider_id": api_key_obj.api_provider_id,
+                "api_provider_name": api_key_obj.api_provider_name,
+            }
+
+        await self.redis_client.json().set(
+            redis_key, Path.root_path(), user_data
+        )
+        await self.redis_client.expire(
+            redis_key, settings.REDIS_API_KEYS_EXPIRE_IN_SEC
+        )
+
     async def get_user_specific_api_key_from_cache(
-        self, uuid: str, provider_name: str
+        self, user_uuid: str, provider_name: str
     ) -> str:
         """
         Retrieve a specific API key for a user based on the API provider name.
-        When API key is found, lifetime of all keys in the user's API keys list is extended according to the
-        expiration time set in the settings.
-
-        TODO: Consider extending lifetime of only the specific key.
+        When the API key is found, extend the lifetime of all user keys in Redis to the expiry time constant set
+        in the settings.
 
         Args:
-            uuid (str): The user's UUID retrieved from user's JWT and stored in Redis.
-            provider_name (str): The name of the API provider (e.g., "openai").
+            user_uuid (str): The user's UUID.
+            provider_name (str): The name of the API provider (e.g. "openai").
 
         Raises:
             HTTPException: Raised with status code 403 if the user does not have any API keys stored in Redis.
-            HTTPException: Raised with status code 404 if the user does not have an API key for the specified provider.
 
         Returns:
             str: The decrypted API key if found.
         """
 
-        user_api_keys_list = f"user:{uuid}:api_keys"
+        redis_key = f"user:{user_uuid}"
 
-        if not await self.redis_client.exists(user_api_keys_list):
+        if not await self.is_redis_key_present(redis_key):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Please provide a passphrase to continue.",
             )
 
-        pipeline = self.redis_client.pipeline()
-        api_key_ids = await self.redis_client.smembers(user_api_keys_list)
-        decrypted_key: str = ""
+        api_keys: RedisApiKeys = await self.redis_client.json().get(redis_key)
 
-        for api_key_id in api_key_ids:
-            redis_key = f"user:{uuid}:{api_key_id}"
-            await pipeline.expire(
-                redis_key, settings.REDIS_API_KEYS_EXPIRE_IN_SEC
+        api_key_obj = api_keys["apiKeys"].get(provider_name.lower())
+
+        if not api_key_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="API key not found.",
             )
 
-            api_key_data = await self.redis_client.hgetall(redis_key)
-            if api_key_data:
-                if (
-                    api_key_data.get("api_provider_lowercase_name", "").lower()
-                    == provider_name.lower()
-                ):
-                    encrypted_key = api_key_data.get("key")
+        api_key = api_key_obj.get("key")
 
-                    if not encrypted_key:
-                        raise HTTPException(
-                            status_code=status.HTTP_404_NOT_FOUND,
-                            detail="API key not found.",
-                        )
-
-                    fernet_key = Fernet(settings.FERNET_MASTER_KEY)
-                    decrypted_key = fernet_key.decrypt(
-                        passphrase_util.convert_hex_to_bytes(encrypted_key)
-                    ).decode()
-
-        await pipeline.expire(
-            user_api_keys_list, settings.REDIS_API_KEYS_EXPIRE_IN_SEC
-        )
-        await pipeline.execute()
-        return decrypted_key
-
-    async def set_user_api_keys_in_cache(
-        self, uuid: str, api_keys: ApiKeysResponse
-    ) -> None:
-        """
-        Set the user's API keys in Redis. The API keys are stored in a set with the user's UUID as the key.
-
-        Args:
-            uuid (str): The user's UUID retrieved from user's JWT and stored in Redis.
-            api_keys (ApiKeysResponse): The user's API keys retrieved from the database.
-
-        Returns:
-            None
-        """
-
-        if not api_keys.api_keys:
-            return
-
-        user_api_keys_list = f"user:{uuid}:api_keys"
-        pipeline = self.redis_client.pipeline()
-
-        current_api_keys = set(
-            f"api_key:{api_key.id}" for api_key in api_keys.api_keys
+        await self.redis_client.expire(
+            redis_key, settings.REDIS_API_KEYS_EXPIRE_IN_SEC
         )
 
-        if await self.redis_client.exists(user_api_keys_list):
-            existing_api_keys = await self.redis_client.smembers(
-                user_api_keys_list
-            )
-            api_keys_to_delete = existing_api_keys - current_api_keys
+        fernet_key = Fernet(settings.FERNET_MASTER_KEY)
 
-            for api_key_id in api_keys_to_delete:
-                redis_key = f"user:{uuid}:{api_key_id}"
+        decrypted_api_key = fernet_key.decrypt(
+            passphrase_util.convert_hex_to_bytes(api_key)
+        ).decode()
 
-                await pipeline.delete(redis_key)
-                await pipeline.srem(user_api_keys_list, api_key_id)
+        return decrypted_api_key
 
-            api_keys_to_add = current_api_keys - existing_api_keys
-        else:
-            api_keys_to_add = current_api_keys
-
-        for api_key in api_keys.api_keys:
-            redis_key = f"user:{uuid}:api_key:{api_key.id}"
-            fernet_key = Fernet(settings.FERNET_MASTER_KEY)
-
-            api_key_data = {
-                "key": passphrase_util.convert_bytes_to_hex(
-                    fernet_key.encrypt(api_key.key.encode())
-                ),
-                "api_provider_id": str(api_key.api_provider_id),
-                "api_provider_name": api_key.api_provider_name,
-                "api_provider_lowercase_name": api_key.api_provider_lowercase_name,
-            }
-
-            await pipeline.hset(redis_key, mapping=api_key_data)
-            await pipeline.expire(
-                redis_key, settings.REDIS_API_KEYS_EXPIRE_IN_SEC
-            )
-
-            if f"api_key:{api_key.id}" in api_keys_to_add:
-                await pipeline.sadd(user_api_keys_list, f"api_key:{api_key.id}")
-
-        await pipeline.expire(
-            user_api_keys_list, settings.REDIS_API_KEYS_EXPIRE_IN_SEC
-        )
-        await pipeline.execute()
-
-    async def delete_user_api_keys_from_cache(self, uuid: str) -> None:
+    async def delete_user_api_keys_from_cache(self, user_uuid: str) -> None:
         """
         Delete the user's API keys from Redis.
 
         Args:
-            uuid (str): The user's UUID retrieved from user's JWT and stored in Redis.
+            user_uuid (str): The user's UUID.
 
         Returns:
             None
         """
 
-        user_api_keys_list = f"user:{uuid}:api_keys"
+        redis_key = f"user:{user_uuid}"
 
-        if not await self.redis_client.exists(user_api_keys_list):
+        if not await self.is_redis_key_present(redis_key):
             return
 
-        pipeline = self.redis_client.pipeline()
-        api_key_ids = await self.redis_client.smembers(user_api_keys_list)
+        await self.redis_client.delete(redis_key)
 
-        for api_key_id in api_key_ids:
-            redis_key = f"user:{uuid}:{api_key_id}"
-            await pipeline.delete(redis_key)
+    async def is_redis_key_present(self, redis_key: str) -> bool:
+        """
+        Checks if a given key exists in Redis.
 
-        await pipeline.delete(user_api_keys_list)
-        await pipeline.execute()
+        Args:
+            redis_key (str): The Redis key to check for existence.
+
+        Returns:
+            bool: True if the key exists, False otherwise.
+        """
+
+        # Redis `exists` command returns 1 if the key exists or 0 if it does not.
+        return await self.redis_client.exists(redis_key) == 1
