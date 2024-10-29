@@ -84,6 +84,7 @@ class ChatHistoryService(BaseService[ChatHistoryRepository]):
                     if chat_history.role == RoleEnum.assistant
                     else None
                 ),
+                sent_at=chat_history.sent_at,
             )
             for chat_history in chat_histories
         ]

@@ -1,7 +1,7 @@
 from uuid import UUID
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PastDatetime, field_serializer
 
 from src.shared.enums import RoleEnum, AiModelEnum
 
@@ -21,6 +21,7 @@ class ChatHistoryMessage(BaseModel):
     api_provider_id: Annotated[
         int | None, Field(serialization_alias="apiProviderId", default=None)
     ]
+    sent_at: Annotated[PastDatetime, Field(serialization_alias="sentAt")]
 
 
 class ChatHistoryResponse(BaseModel):
@@ -30,3 +31,12 @@ class ChatHistoryResponse(BaseModel):
         str, Field(serialization_alias="customInstructions")
     ]
     messages: list[ChatHistoryMessage]
+
+    @field_serializer("messages")
+    def serialize_messages_ascending(self, messages: list[ChatHistoryMessage]):
+        """
+        Sort the messages by 'sent_at' date in ascending order.
+        """
+
+        messages.sort(key=lambda messages: messages.sent_at)
+        return messages
