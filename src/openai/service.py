@@ -85,8 +85,6 @@ class OpenAiService(BaseAiService):
             ChatHistoryCompletionResponse: The response containing AI model's message and room UUID.
         """
 
-        payload = chat_room_service.handle_room_uuid(user_id, payload)
-
         try:
             client: OpenAI = OpenAI(api_key=api_key)
 
@@ -107,6 +105,7 @@ class OpenAiService(BaseAiService):
                 ],
             )
 
+            payload = chat_room_service.handle_room_uuid(user_id, payload)
             chat_history_service.store_chat_history(
                 response.choices[0].message.content, payload
             )

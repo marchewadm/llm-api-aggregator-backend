@@ -84,8 +84,6 @@ class GeminiService(BaseAiService):
              with AI model name and its custom instructions.
         """
 
-        payload = chat_room_service.handle_room_uuid(user_id, payload)
-
         try:
             genai.configure(api_key=api_key)
 
@@ -114,6 +112,7 @@ class GeminiService(BaseAiService):
                 payload.messages[-1].message
             )
 
+            payload = chat_room_service.handle_room_uuid(user_id, payload)
             chat_history_service.store_chat_history(response.text, payload)
 
             return ChatHistoryCompletionResponse(
