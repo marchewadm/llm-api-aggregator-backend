@@ -1,3 +1,5 @@
+import json
+
 from typing import Annotated, Optional
 
 from pydantic import (
@@ -6,8 +8,8 @@ from pydantic import (
     Field,
     SecretStr,
     field_validator,
+    model_validator,
     ValidationInfo,
-    ConfigDict,
 )
 
 
@@ -49,11 +51,15 @@ class UserUpdatePasswordRequest(BaseModel):
 
 
 class UserUpdateProfileRequest(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    avatar: Optional[str] = None
     name: Optional[Annotated[str, Field(min_length=1, max_length=50)]] = None
     email: Optional[EmailStr] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_to_json(cls, value):
+        if isinstance(value, str):
+            return cls(**json.loads(value))
+        return value
 
 
 class UserProfileResponse(UserBase):

@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from typing import Annotated
+
+from fastapi import APIRouter, Form, UploadFile
 
 from src.auth.dependencies import AuthDependency
 from src.api_key.dependencies import ApiKeyServiceDependency
@@ -43,17 +45,20 @@ async def update_user_password(
     return user_service.update_user_password(auth.user_id, payload)
 
 
+# TODO: Validate image file
+# TODO: Add a global rate limiter and especially for this endpoint make it lower due to the file upload
 @router.patch("/update-profile", response_model=UserUpdateProfileResponse)
 async def update_user_profile(
     auth: AuthDependency,
     user_service: UserServiceDependency,
-    payload: UserUpdateProfileRequest,
+    payload: Annotated[UserUpdateProfileRequest, Form()],
+    avatar: UploadFile | None = None,
 ):
     """
     Update the user's profile by user ID.
     """
 
-    return user_service.update_user_profile(auth.user_id, payload)
+    return await user_service.update_user_profile(auth.user_id, payload, avatar)
 
 
 @router.patch("/update-passphrase", response_model=UserUpdatePassphraseResponse)
