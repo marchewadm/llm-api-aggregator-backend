@@ -13,6 +13,7 @@ from .schemas import (
     UserUpdatePasswordRequest,
     UserUpdateProfileRequest,
     UserProfileResponse,
+    UserUploadAvatarResponse,
     UserUpdatePasswordResponse,
     UserUpdateProfileResponse,
     UserUpdatePassphraseResponse,
@@ -68,6 +69,39 @@ class UserService(BaseService[UserRepository]):
             is_passphrase=True if user.passphrase else False,
         )
 
+    async def upload_user_avatar(
+        self, user_id: int, avatar: UploadFile
+    ) -> UserUploadAvatarResponse:
+        """
+        Upload a user's avatar.
+
+        Args:
+            user_id (int): The ID of the user to update.
+            avatar (UploadFile): The avatar file to upload.
+
+        Raises:
+            HTTPException: Raised with status code 404 if the user is not found.
+
+        Returns:
+            UserUploadAvatarResponse: The response containing the URL of the uploaded avatar.
+        """
+
+        user = self.repository.get_one_with_selected_attributes_by_condition(
+            ["avatar"], "id", user_id
+        )
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+            )
+
+        if user.avatar:
+            self.s3_service.delete_file(user.avatar)
+
+        avatar_url = await self.s3_service.upload_file(avatar, "avatars")
+
+        return UserUploadAvatarResponse(avatar=avatar_url)
+
     def update_user_password(
         self, user_id: int, payload: UserUpdatePasswordRequest
     ) -> UserUpdatePasswordResponse:
@@ -114,15 +148,23 @@ class UserService(BaseService[UserRepository]):
         self,
         user_id: int,
         payload: UserUpdateProfileRequest,
-        avatar: UploadFile | None,
     ) -> UserUpdateProfileResponse:
         """
         Update a user's profile by ID.
 
+        Args:
+            user_id (int): The ID of the user to update.
+            payload (UserUpdateProfileRequest): The payload containing the new profile information.
+
+        Raises:
+            HTTPException: Raised with status code 404 if the user is not found.
+
+        Returns:
+            UserUpdateProfileResponse: The response containing a message of the operation status and the updated fields.
         """
 
         user = self.repository.get_one_with_selected_attributes_by_condition(
-            ["name", "email", "avatar"], "id", user_id
+            ["name", "email"], "id", user_id
         )
 
         if not user:
@@ -133,13 +175,8 @@ class UserService(BaseService[UserRepository]):
         updated_fields = {}
         is_updated = False
 
-        if avatar:
-            if user.avatar:
-                self.s3_service.delete_file(user.avatar)
-
-            updated_fields["avatar"] = await self.s3_service.upload_file(
-                avatar, "avatars"
-            )
+        if payload.avatar:
+            updated_fields["avatar"] = payload.avatar
             is_updated = True
 
         if payload.name and payload.name != user.name:

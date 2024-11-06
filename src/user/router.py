@@ -11,6 +11,7 @@ from .schemas import (
     UserUpdatePasswordRequest,
     UserUpdateProfileRequest,
     UserProfileResponse,
+    UserUploadAvatarResponse,
     UserUpdatePasswordResponse,
     UserUpdateProfileResponse,
     UserUpdatePassphraseResponse,
@@ -32,6 +33,21 @@ async def get_user_profile(
     return user_service.get_profile(auth.user_id)
 
 
+# TODO: Validate image file
+# TODO: Add a global rate limiter and especially for this endpoint make it lower due to the file upload
+@router.post("/upload-avatar", response_model=UserUploadAvatarResponse)
+async def upload_user_avatar(
+    auth: AuthDependency,
+    user_service: UserServiceDependency,
+    avatar: UploadFile,
+):
+    """
+    Upload the user's avatar by user ID.
+    """
+
+    return await user_service.upload_user_avatar(auth.user_id, avatar)
+
+
 @router.patch("/update-password", response_model=UserUpdatePasswordResponse)
 async def update_user_password(
     auth: AuthDependency,
@@ -45,20 +61,17 @@ async def update_user_password(
     return user_service.update_user_password(auth.user_id, payload)
 
 
-# TODO: Validate image file
-# TODO: Add a global rate limiter and especially for this endpoint make it lower due to the file upload
 @router.patch("/update-profile", response_model=UserUpdateProfileResponse)
 async def update_user_profile(
     auth: AuthDependency,
     user_service: UserServiceDependency,
     payload: Annotated[UserUpdateProfileRequest, Form()],
-    avatar: UploadFile | None = None,
 ):
     """
     Update the user's profile by user ID.
     """
 
-    return await user_service.update_user_profile(auth.user_id, payload, avatar)
+    return await user_service.update_user_profile(auth.user_id, payload)
 
 
 @router.patch("/update-passphrase", response_model=UserUpdatePassphraseResponse)

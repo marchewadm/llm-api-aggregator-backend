@@ -1,5 +1,3 @@
-import json
-
 from typing import Annotated, Optional
 
 from pydantic import (
@@ -8,7 +6,6 @@ from pydantic import (
     Field,
     SecretStr,
     field_validator,
-    model_validator,
     ValidationInfo,
 )
 
@@ -51,21 +48,21 @@ class UserUpdatePasswordRequest(BaseModel):
 
 
 class UserUpdateProfileRequest(BaseModel):
-    name: Optional[Annotated[str, Field(min_length=1, max_length=50)]] = None
-    email: Optional[EmailStr] = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_to_json(cls, value):
-        if isinstance(value, str):
-            return cls(**json.loads(value))
-        return value
+    name: Annotated[
+        str | None, Field(min_length=1, max_length=50, default=None)
+    ]
+    email: EmailStr | None = None
+    avatar: str | None = None
 
 
 class UserProfileResponse(UserBase):
     name: Annotated[str, Field(min_length=1, max_length=50)]
     avatar: Optional[str] = None
     is_passphrase: Annotated[bool, Field(serialization_alias="isPassphrase")]
+
+
+class UserUploadAvatarResponse(BaseModel):
+    avatar: str
 
 
 class UserUpdatePasswordResponse(BaseModel):
@@ -76,9 +73,11 @@ class UserUpdatePasswordResponse(BaseModel):
 
 class UserUpdateProfileResponse(BaseModel):
     message: str
-    avatar: Optional[str] = None
-    name: Optional[Annotated[str, Field(min_length=1, max_length=50)]] = None
-    email: Optional[EmailStr] = None
+    name: Annotated[
+        str | None, Field(min_length=1, max_length=50, default=None)
+    ]
+    email: EmailStr | None = None
+    avatar: str | None = None
 
 
 class UserUpdatePassphraseResponse(BaseModel):
