@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 
 from openai import OpenAI, AuthenticationError, NotFoundError
 
@@ -8,10 +8,13 @@ from src.auth.dependencies import AuthDependency
 from src.redis.dependencies import RedisServiceDependency
 from src.chat_room.dependencies import ChatRoomServiceDependency
 from src.chat_history.dependencies import ChatHistoryServiceDependency
+from src.s3.dependencies import S3ServiceDependency
 
 from src.shared.schemas import (
     ChatHistoryCompletionRequest,
     ChatHistoryCompletionResponse,
+    ChatHistoryUploadImageResponse,
+    ChatHistoryCompletionMessage,
 )
 
 
@@ -20,7 +23,7 @@ class OpenAiService(BaseAiService):
     Service for OpenAI related operations.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, s3_service: S3ServiceDependency) -> None:
         """
         Initializes the service.
 
@@ -29,6 +32,7 @@ class OpenAiService(BaseAiService):
         """
 
         super().__init__()
+        self.s3_service = s3_service
 
     @staticmethod
     async def get_api_key(
@@ -56,8 +60,25 @@ class OpenAiService(BaseAiService):
         )
         return api_key
 
-    @staticmethod
+    async def upload_image(
+        self, image: UploadFile
+    ) -> ChatHistoryUploadImageResponse:
+        """
+        Upload an image to S3 and return the URL to use it in the chat message.
+
+        Args:
+            image (UploadFile): The image file to upload.
+
+        Returns:
+            ChatHistoryUploadImageResponse: The response containing the image URL.
+        """
+
+        image_url = await self.s3_service.upload_file(image, "/openai-images")
+
+        return ChatHistoryUploadImageResponse(image_url=image_url)
+
     async def chat(
+        self,
         user_id: int,
         api_key: str,
         chat_room_service: ChatRoomServiceDependency,
@@ -88,6 +109,8 @@ class OpenAiService(BaseAiService):
         try:
             client: OpenAI = OpenAI(api_key=api_key)
 
+            messages = self._format_messages(payload.messages)
+
             response = client.chat.completions.create(
                 model=payload.ai_model,
                 messages=[
@@ -95,17 +118,12 @@ class OpenAiService(BaseAiService):
                         "role": "system",
                         "content": payload.custom_instructions,
                     },
-                    *[
-                        {
-                            "role": msg_payload.role,
-                            "content": msg_payload.message,
-                        }
-                        for msg_payload in payload.messages
-                    ],
+                    *messages,
                 ],
             )
 
             payload = chat_room_service.handle_room_uuid(user_id, payload)
+
             chat_history_service.store_chat_history(
                 response.choices[0].message.content, payload
             )
@@ -125,3 +143,36 @@ class OpenAiService(BaseAiService):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="OpenAI model not found.",
             )
+
+    @staticmethod
+    def _format_messages(
+        messages: list[ChatHistoryCompletionMessage],
+    ) -> list[dict]:
+        """
+        Format the messages to be sent to OpenAI's API.
+
+        Args:
+            messages (list[ChatHistoryCompletionMessage]): The list of messages to be formatted.
+
+        Returns:
+            list[dict]: The formatted messages.
+        """
+
+        formatted_messages = []
+
+        for i, msg in enumerate(messages):
+            message_parts = [{"type": "text", "text": msg.message}]
+
+            if msg.image_url:
+                message_parts.append(
+                    {"type": "image_url", "image_url": {"url": msg.image_url}}
+                )
+
+            formatted_messages.append(
+                {
+                    "role": msg.role,
+                    "content": message_parts,
+                }
+            )
+
+        return formatted_messages

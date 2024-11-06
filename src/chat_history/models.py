@@ -1,5 +1,6 @@
 import uuid
 import datetime
+from typing import Optional
 
 from sqlalchemy import ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -24,6 +25,7 @@ class ChatHistory(Base):
     ai_model: Mapped[AiModelEnum]
     custom_instructions: Mapped[str]
     message: Mapped[str]
+    image_url: Mapped[Optional[str]]
     sent_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

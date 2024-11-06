@@ -1,3 +1,4 @@
+import uuid
 import logging
 import urllib.parse
 
@@ -48,7 +49,9 @@ class S3Service:
 
         try:
             file_content = await file.read()
-            key = f"{folder}/{file.filename}"
+
+            unique_filename = f"{uuid.uuid4()}_{file.filename}"
+            key = f"{folder}/{unique_filename}"
 
             self.s3_client.Bucket(settings.AWS_S3_BUCKET_NAME).put_object(
                 Key=key, Body=file_content
@@ -101,7 +104,8 @@ class S3Service:
         except Exception as e:
             self._handle_exception("An unexpected error occurred.", e)
 
-    def _handle_exception(self, message: str, exception: Exception) -> None:
+    @staticmethod
+    def _handle_exception(message: str, exception: Exception) -> None:
         """
         Handle exceptions raised during AWS S3 operations.
 

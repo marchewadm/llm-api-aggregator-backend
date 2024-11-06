@@ -77,8 +77,9 @@ class ChatHistoryService(BaseService[ChatHistoryRepository]):
         custom_instructions = chat_histories[-1].custom_instructions
         messages = [
             ChatHistoryMessage(
-                role=chat_history.role,
                 message=chat_history.message,
+                image_url=chat_history.image_url,
+                role=chat_history.role,
                 api_provider_id=(
                     chat_history.api_provider_id
                     if chat_history.role == RoleEnum.assistant
@@ -113,19 +114,22 @@ class ChatHistoryService(BaseService[ChatHistoryRepository]):
         """
 
         def create_chat_history(
-            role: RoleEnum, message: str
+            role: RoleEnum, message: str, image_url: str | None = None
         ) -> ChatHistoryInDb:
             return ChatHistoryInDb(
                 ai_model=payload.ai_model,
                 role=role,
                 room_uuid=payload.room_uuid,
                 message=message,
+                image_url=image_url,
                 api_provider_id=payload.api_provider_id,
                 custom_instructions=payload.custom_instructions,
             )
 
         user_chat_history = create_chat_history(
-            RoleEnum.user, payload.messages[-1].message
+            RoleEnum.user,
+            payload.messages[-1].message,
+            payload.messages[-1].image_url,
         )
         assistant_chat_history = create_chat_history(
             RoleEnum.assistant, assistant_message

@@ -11,12 +11,16 @@ class ChatHistoryInDb(BaseModel):
     role: RoleEnum
     room_uuid: UUID
     message: str
+    image_url: Annotated[str | None, Field(default=None)]
     api_provider_id: int
     custom_instructions: str
 
 
 class ChatHistoryMessage(BaseModel):
     message: str
+    image_url: Annotated[
+        str | None, Field(serialization_alias="imageUrl", default=None)
+    ]
     role: RoleEnum
     api_provider_id: Annotated[
         int | None, Field(serialization_alias="apiProviderId", default=None)
