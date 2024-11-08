@@ -2,12 +2,13 @@ from abc import ABC, abstractmethod
 
 from sqlalchemy.exc import NoResultFound
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 
 from src.shared.repository.base import BaseRepository
 from src.shared.schemas import (
     ChatHistoryCompletionRequest,
     ChatHistoryCompletionResponse,
+    ChatHistoryUploadImageResponse,
 )
 
 
@@ -33,6 +34,7 @@ class BaseService[T: BaseRepository]:
 
         self.repository = repository
 
+    # TODO: Add type hints for the return type
     def get_one_by_id(self, entity_id: int):
         """
         Get an entity by its ID.
@@ -103,6 +105,22 @@ class BaseAiService(ABC):
 
         Returns:
             str: The API key for the user.
+        """
+
+        pass
+
+    @abstractmethod
+    async def upload_image(
+        self, image: UploadFile
+    ) -> ChatHistoryUploadImageResponse:
+        """
+        Upload an image to S3 and return the URL to use it in the chat message.
+
+        Args:
+            image (UploadFile): The image file to upload.
+
+        Returns:
+            ChatHistoryUploadImageResponse: The response containing the image URL.
         """
 
         pass
