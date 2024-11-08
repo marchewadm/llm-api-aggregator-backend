@@ -1,7 +1,12 @@
-from fastapi import status, HTTPException
+from fastapi import status, HTTPException, UploadFile
 
 from google import generativeai as genai
-from google.api_core.exceptions import InvalidArgument, NotFound
+from google.generativeai.types import File
+from google.api_core.exceptions import (
+    InvalidArgument,
+    NotFound,
+    PermissionDenied,
+)
 
 from src.shared.service.base import BaseAiService
 
@@ -9,10 +14,14 @@ from src.auth.dependencies import AuthDependency
 from src.redis.dependencies import RedisServiceDependency
 from src.chat_room.dependencies import ChatRoomServiceDependency
 from src.chat_history.dependencies import ChatHistoryServiceDependency
+from src.s3.dependencies import S3ServiceDependency
 
+from src.shared.enums import RoleEnum
 from src.shared.schemas import (
     ChatHistoryCompletionRequest,
     ChatHistoryCompletionResponse,
+    ChatHistoryUploadImageResponse,
+    ChatHistoryCompletionMessage,
 )
 
 
@@ -21,7 +30,7 @@ class GeminiService(BaseAiService):
     Service for Google Gemini related operations.
     """
 
-    def __init__(self):
+    def __init__(self, s3_service: S3ServiceDependency) -> None:
         """
         Initializes the service.
 
@@ -30,6 +39,7 @@ class GeminiService(BaseAiService):
         """
 
         super().__init__()
+        self.s3_service = s3_service
 
     @staticmethod
     async def get_api_key(
@@ -57,8 +67,24 @@ class GeminiService(BaseAiService):
         )
         return api_key
 
-    @staticmethod
+    async def upload_image(
+        self, image: UploadFile
+    ) -> ChatHistoryUploadImageResponse:
+        """
+        Upload an image to S3 and return the URL to use it in the chat message.
+
+        Args:
+            image (UploadFile): The image file to upload.
+
+        Returns:
+            ChatHistoryUploadImageResponse: The response containing the image URL.
+        """
+
+        image_url = await self.s3_service.upload_file(image, "gemini-images")
+        return ChatHistoryUploadImageResponse(image_url=image_url)
+
     async def chat(
+        self,
         user_id: int,
         api_key: str,
         chat_room_service: ChatRoomServiceDependency,
@@ -92,24 +118,8 @@ class GeminiService(BaseAiService):
                 system_instruction=payload.custom_instructions,
             )
 
-            chat = model.start_chat(
-                history=[
-                    *[
-                        {
-                            "role": (
-                                "user"
-                                if msg_payload.role == "user"
-                                else "model"
-                            ),
-                            "parts": msg_payload.message,
-                        }
-                        # Exclude the last message because Gemini API uses it in the next line to perform the request
-                        for msg_payload in payload.messages[:-1]
-                    ]
-                ]
-            )
-            response = await chat.send_message_async(
-                payload.messages[-1].message
+            response = await model.generate_content_async(
+                self._format_messages(payload.messages)
             )
 
             payload = chat_room_service.handle_room_uuid(user_id, payload)
@@ -120,14 +130,59 @@ class GeminiService(BaseAiService):
                 room_uuid=payload.room_uuid,
                 api_provider_id=payload.api_provider_id,
             )
-        except InvalidArgument:
-            # Gemini throws InvalidArgument when the API key is invalid
+        except InvalidArgument as e:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid Gemini API key.",
+                detail=f"Invalid Gemini API key: {e}",
             )
         except NotFound:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Gemini model not found.",
             )
+
+    def _format_messages(
+        self,
+        messages: list[ChatHistoryCompletionMessage],
+    ) -> list[dict]:
+        """
+        Format the messages to be sent to Gemini's API.
+
+        Args:
+            messages (list[ChatHistoryCompletionMessage]): The list of messages to format.
+
+        Returns:
+            list[dict]: The formatted messages.
+        """
+
+        formatted_messages = []
+
+        for msg in messages:
+            role = msg.role if msg.role == RoleEnum.user else "model"
+            message_parts: dict[str, list[str | File]] = {
+                "role": role,
+                "parts": [msg.message],
+            }
+
+            if msg.image_url:
+                clean_filename = self.s3_service.get_clean_filename_from_url(
+                    msg.image_url
+                )
+
+                try:
+                    image_file = genai.get_file(clean_filename)
+                except PermissionDenied:
+                    s3_key = self.s3_service.extract_s3_key_from_url(
+                        msg.image_url
+                    )
+                    local_path = self.s3_service.download_file_to_local(s3_key)
+                    image_file = genai.upload_file(
+                        path=local_path, name=clean_filename
+                    )
+                    self.s3_service.delete_local_file(local_path)
+
+                message_parts["parts"].append(image_file)
+
+            formatted_messages.append(message_parts)
+
+        return formatted_messages
