@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status, UploadFile
 
-from openai import OpenAI, AuthenticationError, NotFoundError
+from openai import OpenAI, AuthenticationError, NotFoundError, OpenAIError
 
 from src.shared.service.base import BaseAiService
 
@@ -73,8 +73,7 @@ class OpenAiService(BaseAiService):
             ChatHistoryUploadImageResponse: The response containing the image URL.
         """
 
-        image_url = await self.s3_service.upload_file(image, "/openai-images")
-
+        image_url = await self.s3_service.upload_file(image, "openai-images")
         return ChatHistoryUploadImageResponse(image_url=image_url)
 
     async def chat(
@@ -143,6 +142,11 @@ class OpenAiService(BaseAiService):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="OpenAI model not found.",
             )
+        except OpenAIError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Something went wrong with OpenAI API. Please try again later.",
+            )
 
     @staticmethod
     def _format_messages(
@@ -160,12 +164,15 @@ class OpenAiService(BaseAiService):
 
         formatted_messages = []
 
-        for i, msg in enumerate(messages):
+        for msg in messages:
             message_parts = [{"type": "text", "text": msg.message}]
 
             if msg.image_url:
                 message_parts.append(
-                    {"type": "image_url", "image_url": {"url": msg.image_url}}
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": msg.image_url},
+                    }
                 )
 
             formatted_messages.append(
