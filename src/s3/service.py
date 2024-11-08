@@ -1,8 +1,10 @@
+import os
 import uuid
+import boto3
 import logging
 import urllib.parse
 
-import boto3
+from pathlib import Path
 
 from botocore.exceptions import (
     NoCredentialsError,
@@ -33,7 +35,7 @@ class S3Service:
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
             region_name=settings.AWS_REGION,
         )
-        self.s3_client = self.session.resource("s3")
+        self.s3_resource = self.session.resource("s3")
 
     async def upload_file(self, file: UploadFile, folder: str) -> str:
         """
@@ -50,16 +52,51 @@ class S3Service:
         try:
             file_content = await file.read()
 
-            unique_filename = f"{uuid.uuid4()}_{file.filename}"
+            unique_filename = (
+                f"{uuid.uuid4()}{os.path.splitext(file.filename)[1]}"
+            )
             key = f"{folder}/{unique_filename}"
 
-            self.s3_client.Bucket(settings.AWS_S3_BUCKET_NAME).put_object(
+            self.s3_resource.Bucket(settings.AWS_S3_BUCKET_NAME).put_object(
                 Key=key, Body=file_content
             )
 
             file_url = f"https://{settings.AWS_S3_BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
 
             return file_url
+        except (NoCredentialsError, PartialCredentialsError) as e:
+            self._handle_exception(
+                "AWS credentials not found or incomplete.", e
+            )
+        except NoRegionError as e:
+            self._handle_exception(
+                "AWS region not found. Please check your configuration.", e
+            )
+        except Exception as e:
+            self._handle_exception("An unexpected error occurred.", e)
+
+    def download_file_to_local(self, filename: str) -> str:
+        """
+        Download a file from AWS S3.
+
+        Args:
+            filename (str): The name of the file to download.
+
+        Returns:
+            str: The path to the downloaded file.
+        """
+
+        try:
+            download_path = (
+                Path(settings.AWS_S3_DOWNLOAD_PATH) / Path(filename).name
+            )
+            download_path.parent.mkdir(parents=True, exist_ok=True)
+
+            self.s3_resource.Bucket(settings.AWS_S3_BUCKET_NAME).download_file(
+                filename, str(download_path)
+            )
+
+            return str(download_path)
         except (NoCredentialsError, PartialCredentialsError) as e:
             self._handle_exception(
                 "AWS credentials not found or incomplete.", e
@@ -83,10 +120,9 @@ class S3Service:
         """
 
         try:
-            parsed_url = urllib.parse.urlparse(file_url)
-            key = parsed_url.path.lstrip("/")
+            key = self.extract_s3_key_from_url(file_url)
 
-            self.s3_client.Bucket(settings.AWS_S3_BUCKET_NAME).delete_objects(
+            self.s3_resource.Bucket(settings.AWS_S3_BUCKET_NAME).delete_objects(
                 Delete={
                     "Objects": [
                         {"Key": key},
@@ -103,6 +139,49 @@ class S3Service:
             )
         except Exception as e:
             self._handle_exception("An unexpected error occurred.", e)
+
+    def delete_local_file(self, local_path: str) -> None:
+        """
+        Delete a local file from the specified download path.
+
+        Args:
+            local_path (str): The path to the local file to delete.
+        """
+
+        try:
+            file_path = Path(local_path)
+            file_path.unlink(missing_ok=True)
+        except Exception as e:
+            self._handle_exception("Failed to delete local file {filename}.", e)
+
+    @staticmethod
+    def extract_s3_key_from_url(file_url: str) -> str:
+        """
+        Extracts the S3 key from a URL.
+
+        Args:
+            file_url (str): The URL to extract the key from.
+
+        Returns:
+            str: The extracted S3 key.
+        """
+
+        parsed_url = urllib.parse.urlparse(file_url)
+        return parsed_url.path.lstrip("/")
+
+    def get_clean_filename_from_url(self, file_url: str) -> str:
+        """
+        Extracts the filename without extension from a URL.
+
+        Args:
+            file_url (str): The URL to extract the filename from.
+
+        Returns:
+            str: The filename without the extension.
+        """
+
+        filename = os.path.basename(self.extract_s3_key_from_url(file_url))
+        return Path(filename).stem
 
     @staticmethod
     def _handle_exception(message: str, exception: Exception) -> None:

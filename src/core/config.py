@@ -1,3 +1,4 @@
+from pathlib import Path
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str
     AWS_REGION: str
     AWS_S3_BUCKET_NAME: str
+    AWS_S3_DOWNLOAD_PATH: str = str(Path("src/s3/tmp/"))
 
     model_config = SettingsConfigDict(
         case_sensitive=True,
