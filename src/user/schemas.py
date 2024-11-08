@@ -7,7 +7,6 @@ from pydantic import (
     SecretStr,
     field_validator,
     ValidationInfo,
-    ConfigDict,
 )
 
 
@@ -49,17 +48,21 @@ class UserUpdatePasswordRequest(BaseModel):
 
 
 class UserUpdateProfileRequest(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    avatar: Optional[str] = None
-    name: Optional[Annotated[str, Field(min_length=1, max_length=50)]] = None
-    email: Optional[EmailStr] = None
+    name: Annotated[
+        str | None, Field(min_length=1, max_length=50, default=None)
+    ]
+    email: EmailStr | None = None
+    avatar: str | None = None
 
 
 class UserProfileResponse(UserBase):
     name: Annotated[str, Field(min_length=1, max_length=50)]
     avatar: Optional[str] = None
     is_passphrase: Annotated[bool, Field(serialization_alias="isPassphrase")]
+
+
+class UserUploadAvatarResponse(BaseModel):
+    avatar: str
 
 
 class UserUpdatePasswordResponse(BaseModel):
@@ -70,9 +73,11 @@ class UserUpdatePasswordResponse(BaseModel):
 
 class UserUpdateProfileResponse(BaseModel):
     message: str
-    avatar: Optional[str] = None
-    name: Optional[Annotated[str, Field(min_length=1, max_length=50)]] = None
-    email: Optional[EmailStr] = None
+    name: Annotated[
+        str | None, Field(min_length=1, max_length=50, default=None)
+    ]
+    email: EmailStr | None = None
+    avatar: str | None = None
 
 
 class UserUpdatePassphraseResponse(BaseModel):

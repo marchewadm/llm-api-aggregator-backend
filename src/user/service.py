@@ -1,16 +1,19 @@
 from sqlalchemy.exc import IntegrityError
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, UploadFile
 
 from src.shared.utils.hash import hash_util
 from src.shared.utils.passphrase import passphrase_util
 from src.shared.service.base import BaseService
+
+from src.s3.dependencies import S3ServiceDependency
 
 from .repository import UserRepository
 from .schemas import (
     UserUpdatePasswordRequest,
     UserUpdateProfileRequest,
     UserProfileResponse,
+    UserUploadAvatarResponse,
     UserUpdatePasswordResponse,
     UserUpdateProfileResponse,
     UserUpdatePassphraseResponse,
@@ -23,7 +26,9 @@ class UserService(BaseService[UserRepository]):
     """
 
     def __init__(
-        self, repository: UserRepository = Depends(UserRepository)
+        self,
+        s3_service: S3ServiceDependency,
+        repository: UserRepository = Depends(UserRepository),
     ) -> None:
         """
         Initializes the service with the repository.
@@ -36,13 +41,7 @@ class UserService(BaseService[UserRepository]):
         """
 
         super().__init__(repository)
-
-    def create(self, payload) -> None:
-        """
-        This method is implemented in AuthService, but not in UserService.
-        """
-
-        pass
+        self.s3_service = s3_service
 
     def get_profile(self, user_id: int) -> UserProfileResponse:
         """
@@ -69,6 +68,39 @@ class UserService(BaseService[UserRepository]):
             avatar=user.avatar,
             is_passphrase=True if user.passphrase else False,
         )
+
+    async def upload_user_avatar(
+        self, user_id: int, avatar: UploadFile
+    ) -> UserUploadAvatarResponse:
+        """
+        Upload a user's avatar.
+
+        Args:
+            user_id (int): The ID of the user to update.
+            avatar (UploadFile): The avatar file to upload.
+
+        Raises:
+            HTTPException: Raised with status code 404 if the user is not found.
+
+        Returns:
+            UserUploadAvatarResponse: The response containing the URL of the uploaded avatar.
+        """
+
+        user = self.repository.get_one_with_selected_attributes_by_condition(
+            ["avatar"], "id", user_id
+        )
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+            )
+
+        if user.avatar:
+            self.s3_service.delete_file(user.avatar)
+
+        avatar_url = await self.s3_service.upload_file(avatar, "avatars")
+
+        return UserUploadAvatarResponse(avatar=avatar_url)
 
     def update_user_password(
         self, user_id: int, payload: UserUpdatePasswordRequest
@@ -112,26 +144,27 @@ class UserService(BaseService[UserRepository]):
         self.repository.update_password_by_id(user_id, hashed_new_password)
         return UserUpdatePasswordResponse()
 
-    def update_user_profile(
-        self, user_id: int, payload: UserUpdateProfileRequest
+    async def update_user_profile(
+        self,
+        user_id: int,
+        payload: UserUpdateProfileRequest,
     ) -> UserUpdateProfileResponse:
         """
         Update a user's profile by ID.
 
         Args:
             user_id (int): The ID of the user to update.
-            payload (UserUpdateProfileRequest): The payload containing optional fields to update: name, email and avatar.
+            payload (UserUpdateProfileRequest): The payload containing the new profile information.
 
         Raises:
             HTTPException: Raised with status code 404 if the user is not found.
 
         Returns:
-            UserUpdateProfileResponse: The response containing a message if the operation is successful or not.
-                Also contains the updated name, email and avatar if available.
+            UserUpdateProfileResponse: The response containing a message of the operation status and the updated fields.
         """
 
         user = self.repository.get_one_with_selected_attributes_by_condition(
-            ["name", "email", "avatar"], "id", user_id
+            ["name", "email"], "id", user_id
         )
 
         if not user:
@@ -139,14 +172,20 @@ class UserService(BaseService[UserRepository]):
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
             )
 
-        updated_fields: dict = {}
-        is_updated: bool = False
+        updated_fields = {}
+        is_updated = False
 
-        for field, new_value in payload.dict().items():
-            current_value = getattr(user, field)
-            if new_value is not None and new_value != current_value:
-                is_updated = True
-                updated_fields.update({field: new_value})
+        if payload.avatar:
+            updated_fields["avatar"] = payload.avatar
+            is_updated = True
+
+        if payload.name and payload.name != user.name:
+            updated_fields["name"] = payload.name
+            is_updated = True
+
+        if payload.email and payload.email != user.email:
+            updated_fields["email"] = payload.email
+            is_updated = True
 
         if is_updated:
             try:
@@ -154,22 +193,16 @@ class UserService(BaseService[UserRepository]):
             except IntegrityError:
                 # Pass the exception to prevent leaking sensitive information like already existing email
                 pass
-            finally:
-                if "email" in updated_fields:
-                    updated_fields.update(
-                        {
-                            "message": "We've sent you a verification email. Please check your inbox."
-                            " If you don't see it, check your spam folder or try updating your email later."
-                        }
-                    )
-                else:
-                    updated_fields.update(
-                        {"message": "Profile updated successfully."}
-                    )
-        else:
-            updated_fields.update(
-                {"message": "Your profile is up to date. No changes were made."}
+            updated_fields["message"] = (
+                "We've sent you a verification email. Please check your inbox. "
+                if "email" in updated_fields
+                else "Profile updated successfully."
             )
+        else:
+            updated_fields["message"] = (
+                "Your profile is up to date. No changes were made."
+            )
+
         return UserUpdateProfileResponse(**updated_fields)
 
     def update_user_passphrase(

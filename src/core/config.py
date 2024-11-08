@@ -1,3 +1,4 @@
+from pathlib import Path
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -17,6 +18,11 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_IN_MINUTES: int = 180
     REDIS_API_KEYS_EXPIRE_IN_SEC: int = 900
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_REGION: str
+    AWS_S3_BUCKET_NAME: str
+    AWS_S3_DOWNLOAD_PATH: str = str(Path("src/s3/tmp/"))
 
     model_config = SettingsConfigDict(
         case_sensitive=True,

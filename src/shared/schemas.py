@@ -6,8 +6,15 @@ from pydantic import BaseModel, Field
 from src.shared.enums import RoleEnum, AiModelEnum
 
 
+class ChatHistoryUploadImageResponse(BaseModel):
+    image_url: Annotated[str, Field(serialization_alias="imageUrl")]
+
+
 class ChatHistoryCompletionMessage(BaseModel):
     message: str
+    image_url: Annotated[
+        str | None, Field(validation_alias="imageUrl", default=None)
+    ]
     role: RoleEnum
 
 
