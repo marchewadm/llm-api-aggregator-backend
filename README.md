@@ -1,7 +1,22 @@
-# chattyAI (WIP)
+# LLM API Aggregator
 
-Chatty AI is a tool that allows you to store your chats from various LLMs in one place, making it easier to manage them.
+LLM API Aggregator is a tool that allows you to store your chats from various LLMs in one place, making it easier to manage them.
 Its backend is built on FastAPI, SQLAlchemy for communicating with a PostgreSQL database along with Alembic for migrations, Redis for caching and Pydantic for performing data validation.
+
+## Table Of Contents
+
+- [Supported APIs](#supported-apis)
+- [Prerequisites](#prerequisites)
+- [Before Usage](#before-usage)
+  - [Note](#note)
+  - [.env.docker-example](#envdocker-example)
+  - [.env.example](#envexample)
+- [Installation](#installation)
+  - [Cloning The Repository](#cloning-the-repository)
+    - [Running The Project Via Docker Compose (Recommended)](#running-the-project-via-docker-compose-recommended)
+    - [Running The Project Without Docker](#running-the-project-without-docker)
+- [License](#license)
+
 
 ## Supported APIs
 
@@ -10,92 +25,14 @@ Its backend is built on FastAPI, SQLAlchemy for communicating with a PostgreSQL 
 
 ## Prerequisites
 
-To run this project, please ensure you have the following installed:
+- Project was develoepd using **Python 3.12**, **PostgreSQL 15.6** and **Redis 7.2.5**.
+- **Docker** - it is not required, but highly recommended to simplify the installation of all dependencies and minimize manual configuration, using Docker Compose.
 
-- Python 3.12 or higher
-- PostgreSQL 15.6 or higher
-- Redis 7.2.5 or higher (with the JSON module)
+## Before Usage
 
-#### NOTE:
+Before installing the application, make sure that a `.env` file is created. To populate the `.env` file, you can use either the `.env.docker-example` or `.env.example` as a template. Copy the contents of example file to `.env` and fill in the required values.
 
-For ease of installation, it is highly recommended to use RedisJSON via a Docker container. You can find the Docker image [on Docker Hub](https://hub.docker.com/r/redis/redis-stack).
-
-## Prerequisites
-
-To run the project, please ensure you have the following installed:
-
-- Python 3.12 or higher
-- PostgreSQL 15.6 or higher
-- Redis 7.2.5 or higher with JSON module
-
-#### NOTE:
-
-I highly recommend installing RedisJSON through container https://hub.docker.com/r/redis/redis-stack
-
-If you are using Windows, you must enable the Windows Subsystem for Linux (WSL) and then install Redis. For detailed instructions, please refer to [how to install Redis on Windows?](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-windows/)
-
-## Installation
-
-### Clone a repository
-
-```bash
-git clone https://github.com/marchewadm/chattyai_backend.git
-```
-
-### Navigate to the root directory
-
-```bash
-cd chattyai_backend
-```
-
-### Create virtual environment
-
-```bash
-python -m venv venv
-```
-
-### Activate virtual environment
-
-- For Windows by using Powershell:
-
-```bash
-./venv/Scripts/Activate.ps1
-```
-
-- For GNU/Linux and macOS by using bash shell:
-
-```bash
-source venv/bin/activate
-```
-
-### Install all necessary dependencies
-
-```bash
-pip install -r requirements/requirements.txt
-```
-
-## Before usage
-
-Before running the application, make sure that PostgreSQL and Redis are installed and running on your machine.
-
-Then, create a new database. You can call it whatever you wish, it doesn't really matter. However, what really matters is creating a `.env` file in the root directory of the project, otherwise the server won't boot up.
-
-The `.env` file should look like this:
-
-```
-DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE
-REDIS_SERVER_HOST=YOUR_REDIS_SERVER_URL
-REDIS_SERVER_PORT=YOUR_REDIS_SERVER_PORT
-ALLOWED_ORIGIN=YOUR_API_CONSUMER
-JWT_AUTH_SECRET_KEY=YOUR_GENERATED_AUTH_SECRET_KEY
-FERNET_MASTER_KEY=YOUR_GENERATED_FERNET_MASTER_KEY
-AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY
-AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_KEY
-AWS_REGION=YOUR_AWS_REGION
-AWS_S3_BUCKET_NAME=YOUR_S3_BUCKET_NAME
-```
-
-#### NOTE:
+### Note:
 
 - Remember to adjust DATABASE_URL according to your database username and password. If the project is running locally, you should set the host and port as `localhost:5432` (or `127.0.0.1:5432` if it doesn't work) since it is running on your local machine and `5432` is the default port for PostgreSQL.
 
@@ -118,11 +55,114 @@ AWS_S3_BUCKET_NAME=YOUR_S3_BUCKET_NAME
   ```
   Then you should copy the key as `YwBQY5h4XpXiFsffgrq-RJmZerMmAvjHFVgY4e9hx48=` (without the quotes) and paste it into the `.env` file.
 
-After creating the .env file, run the following command to create the database tables:
+### `.env.docker-example`
+
+Values in this file, compared to `.env.example`, are mostly prepared to work in a local environment.
+
+```bash
+POSTGRES_USER=postgres
+# Remember to change the password ;)
+POSTGRES_PASSWORD=topsecretpassword
+POSTGRES_DB=llm-api-aggregator
+
+REDIS_SERVER_HOST=redis
+REDIS_SERVER_PORT=6379
+
+# Docker image of the frontend runs on host 3000
+ALLOWED_ORIGIN=http://localhost:3000
+
+AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY
+AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_KEY
+AWS_REGION=YOUR_AWS_REGION
+AWS_S3_BUCKET_NAME=YOUR_S3_BUCKET_NAME
+
+JWT_AUTH_SECRET_KEY=YOUR_GENERATED_AUTH_SECRET_KEY
+FERNET_MASTER_KEY=YOUR_GENERATED_FERNET_MASTER_KEY
+```
+
+### `.env.example`
+
+```bash
+DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE
+
+REDIS_SERVER_HOST=YOUR_REDIS_SERVER_URL
+REDIS_SERVER_PORT=YOUR_REDIS_SERVER_PORT
+
+ALLOWED_ORIGIN=YOUR_API_CONSUMER
+
+AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY
+AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_KEY
+AWS_REGION=YOUR_AWS_REGION
+AWS_S3_BUCKET_NAME=YOUR_S3_BUCKET_NAME
+
+JWT_AUTH_SECRET_KEY=YOUR_GENERATED_AUTH_SECRET_KEY
+FERNET_MASTER_KEY=YOUR_GENERATED_FERNET_MASTER_KEY
+```
+
+## Installation
+
+### Cloning The Repository
+
+```bash
+git clone https://github.com/marchewadm/llm-api-aggregator-backend.git
+cd llm-api-aggregator-backend
+```
+
+#### Running The Project Via Docker Compose (Recommended)
+
+1. **Build Docker Image**
+
+```bash
+docker compose build
+```
+
+2. **Run The Container**
+
+```bash
+docker compose up -d
+```
+
+3. **Stop The Container**
+
+```bash
+docker compose down
+```
+
+#### Running The Project Without Docker
+
+1. **Create Virtual Environment**
+
+```bash
+python -m venv venv
+```
+
+2. **Activate Virtual Environment**
+
+- For Windows by using Powershell:
+
+```bash
+./venv/Scripts/Activate.ps1
+```
+
+- For GNU/Linux and macOS by using bash shell:
+
+```bash
+source venv/bin/activate
+```
+
+3. **Install All Necessary Dependencies**
+
+```bash
+pip install -r requirements/requirements.txt
+```
+
+4. **Running Migrations**
 
 ```bash
 alembic upgrade head
 ```
+
+5. **Initializing API Providers**
 
 Once the database tables have been created, run the following command from the root directory to execute the script that will initialize the API providers in the database:
 
@@ -132,7 +172,7 @@ python -m src.core.init_api_providers
 
 And that's it! Now you can proceed to the next step: running your new, freshly installed and configured app.
 
-## Usage
+6. **Usage**
 
 ```bash
 # NOTE:
@@ -142,11 +182,6 @@ uvicorn src.main:app --reload
 ```
 
 After executing the command, the server should start listening at the address `127.0.0.1:8000`.
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
 
 ## License
 
