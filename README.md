@@ -1,7 +1,9 @@
-# LLM API Aggregator
+# LLM API Aggregator (Backend)
 
 LLM API Aggregator is a tool that allows you to store your chats from various LLMs in one place, making it easier to manage them.
 Its backend is built on FastAPI, SQLAlchemy for communicating with a PostgreSQL database along with Alembic for migrations, Redis for caching and Pydantic for performing data validation.
+
+The repository with the application's frontend is located at [this link](https://github.com/marchewadm/llm-api-aggregator-frontend). Make sure to set it up if you want to use it with a user interface.
 
 ## Table Of Contents
 
