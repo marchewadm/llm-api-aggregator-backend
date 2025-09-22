@@ -7,6 +7,7 @@ The repository with the application's frontend is located at [this link](https:/
 
 ## Table Of Contents
 
+- [Demo](#demo)
 - [Supported APIs](#supported-apis)
 - [Prerequisites](#prerequisites)
 - [Before Usage](#before-usage)
@@ -19,6 +20,9 @@ The repository with the application's frontend is located at [this link](https:/
     - [Running The Project Without Docker](#running-the-project-without-docker)
 - [License](#license)
 
+## Demo
+
+https://github.com/user-attachments/assets/4d0dd8c1-d570-44ac-9942-9cd799fb8c0c
 
 ## Supported APIs
 
