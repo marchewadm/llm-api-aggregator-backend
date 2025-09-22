@@ -1,4 +1,5 @@
 import os
+import alembic_postgresql_enum
 
 from dotenv import load_dotenv
 
@@ -7,11 +8,15 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from src.database.core import Base
+# Do not remove this import, it is necessary for Alembic to detect the models
+from src.core.database import Base
 
-from src.models.user import User
-from src.models.api_provider import ApiProvider
-from src.models.api_key import ApiKey
+# Import all models here
+from src.user.models import User
+from src.api_provider.models import ApiProvider
+from src.api_key.models import ApiKey
+from src.chat_history.models import ChatHistory
+from src.chat_room.models import ChatRoom
 
 from alembic import context
 

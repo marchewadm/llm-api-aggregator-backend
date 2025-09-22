@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:15.14
+    container_name: llm-api-aggregator-db
+    restart: always
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+
+  redis:
+    image: redis/redis-stack-server
+    container_name: llm-api-aggregator-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 10s
+      start_period: 15s
+      retries: 5
+
+  api:
+    build: .
+    container_name: llm-api-aggregator-api
+    restart: always
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_SERVER_HOST: redis
+      REDIS_SERVER_PORT: 6379
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN}
+      JWT_AUTH_SECRET_KEY: ${JWT_AUTH_SECRET_KEY}
+      FERNET_MASTER_KEY: ${FERNET_MASTER_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m src.core.init_api_providers &&
+             uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
+
+volumes:
+  postgres_data:
